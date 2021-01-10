@@ -19,7 +19,7 @@ const Web3 = require('web3');
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import * as yargs from 'yargs';
+const yargs = require('yargs');
 import BigNumber from 'bignumber.js';
 import * as mongoose from 'mongoose';
 import * as cliProgress from 'cli-progress';

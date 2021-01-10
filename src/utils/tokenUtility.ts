@@ -1,3 +1,5 @@
+import {Token} from "./interfaces";
+
 const config = require('config');
 
 const ANY_TOKEN = {
@@ -9,7 +11,7 @@ const ANY_TOKEN = {
 };
 let tokensByAddress;
 
-export function getTokenByAddress(address:string) {
+export function getTokenByAddress(address:string) :Token{
 
   if (!tokensByAddress) {
     tokensByAddress = {};
@@ -23,7 +25,7 @@ export function getTokenByAddress(address:string) {
 
 
 let tokensByForeignAddress;
-export function getTokenByForeignAddress(foreignAddress:string) {
+export function getTokenByForeignAddress(foreignAddress:string):Token {
   if (!tokensByForeignAddress) {
     tokensByForeignAddress = {};
     config.get('tokenWhitelist').forEach(token => {

@@ -1,57 +1,26 @@
 import { Logger } from 'winston';
 
 const BigNumber = require('bignumber.js');
-import {
-  getHourlyCryptoConversion,
-} from '../../../src/services/conversionRates/getConversionRatesService';
+
 import { getTokenByAddress } from './tokenUtility';
 import { getLogger } from './logger';
+import {getHourlyCryptoConversion} from "./giveth-feathers-service";
+import {DonationMongooseDocument} from "../models/donations.model";
 
 // Used by scripts to set usdValue of donations
 export class DonationUsdValueUtility {
-  app;
   services;
   logger;
   constructor(conversionRateModel, config, logger:Logger) {
-    this.services = {};
     this.logger = logger;
-    const createServiceFromModel = (name, Model) => {
-      this.services[name] = {
-        find: async ({ query }) => {
-          const data = await Model.find(query).exec();
-          return { data };
-        },
-
-        create: obj => Model.create(obj),
-
-        patch: async (id, patchObj) => {
-          const [object] = await Model.find({ id }).exec();
-          Object.keys(patchObj).forEach(key => {
-            object[key] = patchObj[key];
-          });
-          return object.save();
-        },
-      };
-    };
-
-    createServiceFromModel('conversionRates', conversionRateModel);
-
-    // Create app instance to pass getHourlyCryptoConversion method
-    this.app = {
-      get: key => config[key],
-      service: serviceName => {
-        return this.services[serviceName];
-      },
-    };
   }
 
-  async setDonationUsdValue(donation) {
+  async setDonationUsdValue(donation :DonationMongooseDocument) {
     const { createdAt, tokenAddress, amount } = donation;
-
     try {
       const token = getTokenByAddress(tokenAddress);
       const { symbol } = token;
-      const { rate } = await getHourlyCryptoConversion(this.app, createdAt, symbol, 'USD');
+      const { rate } = await getHourlyCryptoConversion(createdAt.getTime(), symbol, 'USD');
       const usdValue = Number(
         new BigNumber(amount.toString())
           .div(10 ** 18)
@@ -59,13 +28,7 @@ export class DonationUsdValueUtility {
           .toFixed(2),
       );
       donation.usdValue = usdValue;
-      // eslint-disable-next-line no-empty
     } catch (e) {
-      // this.logger.error('setDonationUsdValue error', {
-      //   donation,
-      //   tokenAddress,
-      //   token: getTokenByAddress(tokenAddress),
-      // });
     }
   }
 }

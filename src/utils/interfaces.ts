@@ -109,3 +109,12 @@ export interface ReportInterface {
   fetchedNewPledgeAdminCount: number,
   fetchedNewEventsCount: number,
 }
+
+export interface Token{
+  symbol:string,
+  name :string,
+  address:string,
+  foreignAddress:string,
+  decimals:number,
+  rateEqSymbol?:string
+}
