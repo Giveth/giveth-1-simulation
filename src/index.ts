@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 /*  eslint-disable no-await-in-loop */
 // import  Web3 from 'web3';
+import {createProgressBar} from "./utils/progressBar";
+
 const config =require('config');
 import {
   AdminInterface,
@@ -45,11 +47,11 @@ import { getAdminBatch, getPledgeBatch } from './utils/liquidPledgingHelper';
 import { toBN } from 'web3-utils';
 import { Types } from 'mongoose';
 import { sendReportEmail, sendSimulationErrorEmail } from './utils/emailService';
-
+import {syncDacs} from './services/dacServices'
 const _groupBy = require('lodash.groupby');
-const dappMailerUrl = config.get('dappMailerUrl');
-const givethDevMailList = config.get('givethDevMailList');
-const dappMailerSecret = config.get('dappMailerSecret')
+const dappMailerUrl = config.get('dappMailerUrl') as string;
+const givethDevMailList = config.get('givethDevMailList') as string[];
+const dappMailerSecret = config.get('dappMailerSecret') as string;
 
 const report = {
   syncDelegatesSpentTime: 0,
@@ -82,22 +84,14 @@ const { argv } = yargs
     type: 'boolean',
     default: false,
   })
-  .option('cache-dir', {
-    describe: 'directory to create cache file inside',
-    type: 'string',
-  })
-  .option('log-dir', {
-    describe: 'directory to save logs inside, if empty logs will be write to stdout',
-    type: 'string',
-  })
   .option('debug', {
     describe: 'produce debugging log',
     type: 'boolean',
   })
   .version(false)
   .help();
-const cacheDir = argv['cache-dir'];
-const logDir = argv['log-dir'];
+const cacheDir = config.get('cacheDir');
+const logDir = config.get('logDir');
 const updateState = argv['update-network-cache'];
 const updateEvents = argv['update-network-cache'];
 const index = !argv['dry-run'];
@@ -127,7 +121,7 @@ let homeWeb3;
 let liquidPledging;
 
 console.log(cacheDir);
-const logger: Logger = getLogger(logDir, argv.debug ? 'debug' : 'error');
+const logger: Logger = getLogger();
 
 function eventDecodersFromArtifact(artifact) {
   return artifact.compilerOutput.abi
@@ -285,16 +279,6 @@ async function getKernel() {
 
 const donationUsdValueUtility = new DonationUsdValueUtility(converionRateModel, config, logger);
 
-const createProgressBar = ({ title }) => {
-  return new cliProgress.SingleBar({
-    format: `${title} |${_colors.cyan(
-      '{bar}',
-    )}| {percentage}% || {value}/{total}`,
-    barCompleteChar: '\u2588',
-    barIncompleteChar: '\u2591',
-    hideCursor: true,
-  });
-};
 
 // Gets status of liquidpledging storage
 const fetchBlockchainData = async () => {
@@ -1641,61 +1625,6 @@ const syncPledgeAdminsAndProjects = async () => {
 };
 
 
-const syncDacs = async () => {
-  console.log('syncDacs called', { fixConflicts });
-  if (!fixConflicts) return;
-  const {
-    getDacDataForCreate,
-  } = await createProjectHelper({
-    web3: foreignWeb3,
-    homeWeb3,
-    liquidPledging,
-    kernel: await getKernel(),
-    AppProxyUpgradeable,
-  });
-
-  const startTime = new Date();
-  const progressBar = createProgressBar({ title: 'Syncing Dacs with events' });
-  progressBar.start(events.length, 0);
-  for (let i = 0; i < events.length; i += 1) {
-    progressBar.update(i);
-    try {
-      const { event, transactionHash, returnValues } = events[i];
-      if (event !== 'DelegateAdded') continue;
-      const { idDelegate } = returnValues;
-      const pledgeAdmin = await pledgeAdminModel.findOne({ id: Number(idDelegate) });
-      if (pledgeAdmin) {
-        continue;
-      }
-      const { from } = await getTransaction(
-        {txHash:transactionHash, isHome:false, foreignWeb3, homeWeb3});
-      const delegateId = idDelegate;
-      let dac = await dacModel.findOne({ txHash:transactionHash });
-      if (!dac) {
-        const dacData = await getDacDataForCreate({
-          from,
-          txHash: transactionHash,
-          delegateId,
-        });
-        dac = await new dacModel(dacData).save();
-        report.createdDacs++;
-        logger.info('created dac ', dac);
-      }
-      await new pledgeAdminModel(
-        { id: Number(delegateId), type: 'dac', typeId: dac._id }).save();
-      report.createdPledgeAdmins++;
-
-    } catch (e) {
-      logger.error('error in creating dac', e);
-    }
-  }
-  progressBar.update(events.length);
-  progressBar.stop();
-  const spentTime = (new Date().getTime() - startTime.getTime()) / 1000;
-  report.syncDelegatesSpentTime = spentTime;
-  console.log(`dac/delegate events synced end.\n spentTime :${spentTime} seconds`);
-};
-
 
 const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongooseDocument) => {
   const eventToStatus = {
@@ -1768,7 +1697,7 @@ const main = async () => {
     /*
        Find conflicts in milestone donation counter
       */
-    const mongoUrl = config.get('mongodb');
+    const mongoUrl = config.get('mongodb') as string;
     mongoose.connect(mongoUrl);
     const db = mongoose.connection;
 
@@ -1777,7 +1706,16 @@ const main = async () => {
     db.once('open', async () => {
       logger.info('Connected to Mongo');
       try {
-        await syncDacs();
+        await syncDacs({
+          report,
+          homeWeb3,
+          foreignWeb3,
+          events,
+            liquidPledging,
+          fixConflicts,
+          AppProxyUpgradeable,
+          kernel :getKernel()
+        });
         await syncPledgeAdminsAndProjects();
         await syncDonationsWithNetwork();
         await updateEntity(dacModel, AdminTypes.DAC);

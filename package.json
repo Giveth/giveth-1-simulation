@@ -6,17 +6,17 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "./node_modules/.bin/tsc src/index.ts",
-    "start:local": "npm run build && NODE_ENV=local node src/index.js --update-network-cache  --log-dir data/log --cache-dir data/cache",
-    "start:develop": "npm run build && NODE_ENV=develop node src/index.js --update-network-cache   --debug true --log-dir data/log --cache-dir data/cache",
-    "start:beta": "npm run build && NODE_ENV=beta node src/index.js --update-network-cache  --log-dir data/log --cache-dir data/cache",
-    "start:ts": "npm run build && NODE_ENV=simulation ./node_modules/.bin/ts-node src/index.ts --update-network-cache  --log-dir data/log --cache-dir data/cache"
+    "start:local": "npm run build && NODE_ENV=local node src/index.js --update-network-cache  ",
+    "start:develop": "npm run build && NODE_ENV=develop node src/index.js --update-network-cache   --debug true ",
+    "start:beta": "npm run build && NODE_ENV=beta node src/index.js --update-network-cache  ",
+    "start:ts": "npm run build && NODE_ENV=simulation ./node_modules/.bin/ts-node src/index.ts --update-network-cache  "
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/config": "0.0.38",
-    "@types/node": "^14.14.14",
+    "@types/node": "^14.14.20",
     "@types/web3": "1.2.2",
     "ts-loader": "8.0.12",
     "ts-node": "^9.1.1",
