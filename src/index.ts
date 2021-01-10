@@ -85,7 +85,6 @@ const { argv } = yargs
   .option('cache-dir', {
     describe: 'directory to create cache file inside',
     type: 'string',
-    default: path.join(os.tmpdir(), 'simulation-script'),
   })
   .option('log-dir', {
     describe: 'directory to save logs inside, if empty logs will be write to stdout',
