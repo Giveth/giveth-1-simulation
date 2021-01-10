@@ -49,6 +49,7 @@ import { Types } from 'mongoose';
 import { sendReportEmail, sendSimulationErrorEmail } from './utils/emailService';
 import {syncDacs} from './services/dacServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
+import {updateMilestonesFinalStatus} from "./services/milestoneService";
 const _groupBy = require('lodash.groupby');
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
@@ -621,37 +622,6 @@ export const updateEntity = async (model, type) => {
 
 };
 
-
-// Update createdAt date of donations based on transaction date
-// @params {string} startDate
-// eslint-disable-next-line no-unused-vars
-const updateDonationsCreatedDate = async (startDate: Date) => {
-  const web3 = foreignWeb3;
-  const donations = await donationModel.find({
-    createdAt: {
-      // $gte: startDate.toISOString(),
-      $gte: startDate,
-    },
-  });
-  for (const donation of donations) {
-    const { _id, txHash, createdAt } = donation;
-    const { timestamp } = await getTransaction({txHash, isHome :false, foreignWeb3, homeWeb3});
-    const newCreatedAt =timestamp;
-    if (createdAt.toISOString() !== newCreatedAt.toISOString()) {
-      logger.info(
-        `Donation ${_id.toString()} createdAt is changed from ${createdAt.toISOString()} to ${newCreatedAt.toISOString()}`,
-      );
-      logger.info('Updating...');
-      const d = await donationModel.findOne({ _id });
-      d.createdAt = newCreatedAt;
-      await d.save();
-    }
-  }
-
-};
-
-// Fills pledgeNotUsedDonationListMap map to contain donation items for each pledge
-// Fills donationMap to map id to donation item
 const fetchDonationsInfo = async () => {
   // TODO: pendingAmountRemaining is not considered in updating, it should be removed for successful transactions
 
@@ -1468,65 +1438,6 @@ const syncDonationsWithNetwork = async () => {
 // eslint-disable-next-line no-unused-vars
 
 
-const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongooseDocument) => {
-  const eventToStatus = {
-    ApproveCompleted: MilestoneStatus.COMPLETED,
-    CancelProject: MilestoneStatus.CANCELED,
-    MilestoneCompleteRequestApproved: MilestoneStatus.COMPLETED,
-    MilestoneCompleteRequestRejected: MilestoneStatus.IN_PROGRESS,
-    MilestoneCompleteRequested: MilestoneStatus.NEEDS_REVIEW,
-    // "PaymentCollected", // expected status depends on milestone
-    ProjectAdded: MilestoneStatus.IN_PROGRESS,
-    // "ProjectUpdated", // Does not affect milestone status
-    // "RecipientChanged", // Does not affect milestone status
-    RejectCompleted: MilestoneStatus.REJECTED,
-    RequestReview: MilestoneStatus.NEEDS_REVIEW,
-  };
-
-  const lastEvent = events.pop();
-  if (lastEvent.event === 'PaymentCollected') {
-    const { maxAmount, donationCounters, fullyFunded, reviewerAddress } = milestone;
-    const hasReviewer = reviewerAddress && reviewerAddress !== ZERO_ADDRESS;
-    if (
-      maxAmount &&
-      (fullyFunded || hasReviewer) &&
-      donationCounters[0].currentBalance.toString() === '0'
-    ) {
-      return MilestoneStatus.PAID;
-    }
-    return getExpectedStatus(events, milestone);
-  }
-  return eventToStatus[lastEvent.event];
-};
-
-const updateMilestonesFinalStatus = async () => {
-  const milestones = await milestoneModel.find({ projectId: { $gt: 0 } });
-  const startTime = new Date();
-  const progressBar = createProgressBar({ title: 'Updating milestone status' });
-  progressBar.start(milestones.length);
-  for (const milestone of milestones) {
-    progressBar.increment();
-    const matchedEvents = events.filter(event => event.returnValues && event.returnValues.idProject === String(milestone.projectId));
-    const { status, projectId } = milestone;
-    if ([MilestoneStatus.ARCHIVED, MilestoneStatus.CANCELED].includes(status)) continue;
-
-    let message = '';
-    message += `Project ID: ${projectId}\n`;
-    message += `Events: ${events.toString()}\n`;
-    const expectedStatus = getExpectedStatus(matchedEvents, milestone);
-    if (status !== expectedStatus ){
-      await milestoneModel.updateOne({ _id: milestone._id }, { status: expectedStatus, mined: true });
-      report.updatedMilestoneStatus ++;
-    }
-  }
-  progressBar.update(milestones.length);
-  progressBar.stop();
-  const spentTime = (new Date().getTime() - startTime.getTime()) / 1000;
-  console.log(`Updating milestone status synced end.\n spentTime :${spentTime} seconds`);
-  report.syncMilestoneSpentTime = spentTime;
-};
-
-
 const main = async () => {
   try {
     await fetchBlockchainData();
@@ -1572,7 +1483,12 @@ const main = async () => {
         await updateEntity(dacModel, AdminTypes.DAC);
         await updateEntity(campaignModel, AdminTypes.CAMPAIGN);
         await updateEntity(milestoneModel, AdminTypes.MILESTONE);
-        await updateMilestonesFinalStatus();
+        await updateMilestonesFinalStatus(
+            {
+              report,
+              events
+            }
+        );
         console.table(report);
         if (config.get('emailReport')){
           await sendReportEmail(report,
