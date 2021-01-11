@@ -4,6 +4,9 @@
  * @param {string} hex
  */
 import { transactionModel, TransactionMongooseDocument } from '../models/transactions.model';
+import {getHomeTxHash} from "../services/homeTxHashService";
+import {donationModel} from "../models/donations.model";
+import {Types} from "mongoose";
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 export const removeHexPrefix = hex => {
@@ -103,16 +106,47 @@ export async function getTransaction(
   return transaction;
 
 }
-//
-// export const getTransaction = async (web3:any ,hash:string) => {
-//   const transaction = await web3.eth.getTransaction(hash);
-//   return transaction;
-// };
 
-export const ANY_TOKEN = {
-  name: 'ANY_TOKEN',
-  address: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
-  foreignAddress: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
-  symbol: 'ANY_TOKEN',
-  decimals: 18,
-};
+
+export async function getActionTakerAddress(options: {
+  txHash: string,
+  homeTxHash: string,
+  foreignWeb3:any,
+  homeWeb3:any
+}) {
+  const {txHash, homeTxHash, foreignWeb3, homeWeb3} = options;
+  const {from} = await getTransaction({
+    txHash: homeTxHash || txHash,
+    isHome: Boolean(homeTxHash),
+    foreignWeb3,
+    homeWeb3
+  });
+  return from;
+}
+
+export async function getHomeTxHashForDonation(options:
+                                          {
+                                            txHash: string,
+                                            parentDonations: string[],
+                                            from: string,
+                                            web3 :any
+                                          }) :Promise<string>{
+  const {txHash, parentDonations, from, web3} = options;
+  if (from === '0') {
+    return getHomeTxHash({
+      txHash,
+      web3
+    });
+  }
+  if (parentDonations && parentDonations.length === 1) {
+    const parentDonationWithHomeTxHash = await donationModel.findOne({
+      _id: Types.ObjectId(parentDonations[0]),
+      txHash,
+      homeTxHash: {$exists: true},
+    });
+    if (parentDonationWithHomeTxHash) {
+      return parentDonationWithHomeTxHash.homeTxHash;
+    }
+  }
+  return null;
+}

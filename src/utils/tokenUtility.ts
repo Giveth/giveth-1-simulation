@@ -1,4 +1,5 @@
 import {extendedDonation, Token} from "./interfaces";
+
 import BigNumber from "bignumber.js";
 
 const config = require('config');
