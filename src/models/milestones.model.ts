@@ -1,6 +1,6 @@
 import {Document, model, Schema, Types} from "mongoose";
 
-import DonationCounter from './donationCounter.model';
+import {DonationCounter, DonationCounterInterface} from './donationCounter.model';
 
 // milestones-model.js - A mongoose model
 //
@@ -31,10 +31,11 @@ export interface MilestoneMongooseDocument extends  Document {
   title:string,
   status:string,
   projectId:number,
-  donationCounters:any,
   reviewerAddress:string,
   maxAmount:string,
   fullyFunded:boolean,
+  tokenAddress:string,
+  donationCounters: DonationCounterInterface [],
 
 }
 

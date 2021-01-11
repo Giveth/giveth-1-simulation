@@ -1,6 +1,6 @@
 import { Document, model, Schema, Types } from 'mongoose';
 
-import  DonationCounter from './donationCounter.model';
+import {DonationCounter, DonationCounterInterface} from './donationCounter.model';
 
 export const DacStatus = {
   ACTIVE: 'Active',
@@ -11,6 +11,10 @@ export const DacStatus = {
 
 export interface DacMongooseDocument extends Document {
   status:string,
+  donationCounters: DonationCounterInterface[],
+  tokenAddress:string,
+  peopleCount:number,
+
 }
 
 const dac = new Schema(

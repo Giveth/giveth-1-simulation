@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ReportInterface } from './interfaces';
+import { ReportInterface } from '../utils/interfaces';
 const moment = require('moment')
 
 

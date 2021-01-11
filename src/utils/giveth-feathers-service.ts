@@ -1,5 +1,8 @@
 import axios from 'axios';
-const url = 'https://feathers.develop.giveth.io/conversionRates';
+import {getLogger} from "./logger";
+const config = require('config')
+const url = `${config.get('givethFeathersUrl')}/conversionRates`;
+const logger = getLogger();
 export async function getHourlyCryptoConversion(
     timestamp: number,
     fromSymbol: string,
@@ -18,7 +21,7 @@ export async function getHourlyCryptoConversion(
         })
         return result.data;
     }catch (e){
-        console.log('getHourlyCryptoConversion error', e)
+        logger.error('getHourlyCryptoConversion error', e)
         throw e;
     }
 
