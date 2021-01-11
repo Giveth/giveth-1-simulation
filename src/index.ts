@@ -26,6 +26,7 @@ import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {getHomeTxHash} from "./services/homeTxHashService";
 import {updateEntity} from "./services/projectService";
+import {fetchDonationsInfo} from "./services/donationService";
 
 const _groupBy = require('lodash.groupby');
 const dappMailerUrl = config.get('dappMailerUrl') as string;
@@ -67,9 +68,9 @@ let admins: AdminInterface[];
 // Map from pledge id to list of donations which are charged and can be used to move money from
 const chargedDonationListMap: DonationListObjectInterface = {};
 // Map from pledge id to list of donations belonged to the pledge and are not used yet!
-const pledgeNotUsedDonationListMap = {};
+let pledgeNotUsedDonationListMap = {};
 // Map from _id to list of donations
-const donationMap: DonationObjectInterface = {};
+let donationMap: DonationObjectInterface = {};
 // Map from txHash to list of included events
 const txHashTransferEventMap = {};
 // Map from owner pledge admin ID to dictionary of charged donations
@@ -144,64 +145,6 @@ async function getKernel() {
     const kernelAddress = await liquidPledging.kernel();
     return new Kernel(foreignWeb3, kernelAddress);
 }
-
-const fetchDonationsInfo = async () => {
-    // TODO: pendingAmountRemaining is not considered in updating, it should be removed for successful transactions
-
-    const donations = await donationModel.find({});
-    for (const donation of donations) {
-        const {
-            _id,
-            amount,
-            amountRemaining,
-            pledgeId,
-            status,
-            mined,
-            txHash,
-            parentDonations,
-            ownerId,
-            ownerType,
-            ownerTypeId,
-            intendedProjectId,
-            giverAddress,
-            tokenAddress,
-            isReturn,
-            usdValue,
-            createdAt,
-        } = donation;
-
-        const list = pledgeNotUsedDonationListMap[pledgeId.toString()] || [];
-        if (list.length === 0) {
-            pledgeNotUsedDonationListMap[pledgeId.toString()] = list;
-        }
-
-        const item = {
-            _id: _id.toString(),
-            amount: amount.toString(),
-            savedAmountRemaining: amountRemaining.toString(),
-            amountRemaining: new BigNumber(0),
-            txHash,
-            status,
-            savedStatus: status,
-            mined,
-            parentDonations: parentDonations.map(id => id.toString()),
-            ownerId,
-            ownerType,
-            ownerTypeId,
-            intendedProjectId,
-            giverAddress,
-            pledgeId: pledgeId.toString(),
-            tokenAddress,
-            isReturn,
-            usdValue,
-            createdAt,
-        };
-
-        list.push(item);
-        donationMap[_id.toString()] = item as unknown as extendedDonation;
-    }
-
-};
 
 const convertPledgeStateToStatus = (pledge: PledgeInterface,
                                     pledgeAdmin: AdminInterface | PledgeAdminMongooseDocument) => {
@@ -914,7 +857,10 @@ const syncEventWithDb = async (eventData: EventInterface) => {
 
 const syncDonationsWithNetwork = async () => {
     // Map from pledge id to list of donations belonged to the pledge and are not used yet!
-    await fetchDonationsInfo();
+    const donationsInfo = await fetchDonationsInfo();
+    donationMap = donationsInfo.donationMap;
+    pledgeNotUsedDonationListMap = donationsInfo.pledgeNotUsedDonationListMap;
+
     const startTime = new Date();
     // create new progress bar
     const progressBar = createProgressBar({title: 'Syncing donations with events.'});
