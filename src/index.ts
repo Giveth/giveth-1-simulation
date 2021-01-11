@@ -1,9 +1,5 @@
-/* eslint-disable no-continue */
-/* eslint-disable no-console */
-/*  eslint-disable no-await-in-loop */
-// import  Web3 from 'web3';
-import {createProgressBar} from "./utils/progressBar";
 
+import {createProgressBar} from "./utils/progressBar";
 const config =require('config');
 import {
   AdminInterface,
@@ -11,16 +7,10 @@ import {
   DonationListObjectInterface, DonationObjectInterface, EventInterface, extendedDonation,
   PledgeInterface, TransferInfoInterface,
 } from './utils/interfaces';
-// import  Web3 from 'web3';
 const Contract = require('web3-eth-contract');
-const Web3WsProvider = require('web3-providers-ws');
 const ForeignGivethBridgeArtifact = require('giveth-bridge/build/ForeignGivethBridge.json');
 import { keccak256 } from 'web3-utils';
 
-const Web3 = require('web3');
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
 const yargs = require('yargs');
 import BigNumber from 'bignumber.js';
 import * as mongoose from 'mongoose';
@@ -50,6 +40,7 @@ import { sendReportEmail, sendSimulationErrorEmail } from './utils/emailService'
 import {syncDacs} from './services/dacServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
+import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 const _groupBy = require('lodash.groupby');
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
@@ -231,49 +222,6 @@ config.get('tokenWhitelist').forEach(({ symbol, decimals }) => {
   };
 });
 
-
-const instantiateWeb3 = async ({ url }) => {
-  const options = {
-    timeout: 30000, // ms
-
-    clientConfig: {
-      // Useful if requests are large
-      maxReceivedFrameSize: 100000000, // bytes - default: 1MiB
-      maxReceivedMessageSize: 100000000, // bytes - default: 8MiB
-
-      // Useful to keep a connection alive
-      keepalive: true,
-      keepaliveInterval: 45000, // ms
-    },
-
-    // Enable auto reconnection
-    reconnect: {
-      auto: true,
-      delay: 5000, // ms
-      maxAttempts: 5,
-      onTimeout: false,
-    },
-  };
-
-  if (!url || !url && url.startsWith('ws')) {
-    throw new Error('invalid web3 websocket url');
-  }
-  const provider = new Web3WsProvider(url, options);
-  return new Promise(resolve => {
-    const web3 = new Web3(provider);
-    if (provider.on) {
-      provider.on('connect', () => {
-        console.log(`connected to ${url}`);
-        liquidPledging = new LiquidPledging(web3, liquidPledgingAddress);
-        resolve(web3);
-      });
-    } else {
-      liquidPledging = new LiquidPledging(web3, liquidPledgingAddress);
-      resolve(web3);
-    }
-  });
-};
-
 async function getKernel() {
   const kernelAddress = await liquidPledging.kernel();
   return new Kernel(foreignWeb3, kernelAddress);
@@ -281,131 +229,6 @@ async function getKernel() {
 
 const donationUsdValueUtility = new DonationUsdValueUtility(converionRateModel, config, logger);
 
-
-// Gets status of liquidpledging storage
-const fetchBlockchainData = async () => {
-  console.log('fetchBlockchainData ....', {
-    updateEvents,
-    updateState,
-  });
-  try {
-    homeWeb3 = await instantiateWeb3({ url: homeNodeUrl });
-    foreignWeb3 = await instantiateWeb3({ url: nodeUrl });
-
-    if (!fs.existsSync(cacheDir)) {
-      fs.mkdirSync(cacheDir);
-    }
-    const stateFile = path.join(cacheDir, `./liquidPledgingState_${process.env.NODE_ENV}.json`);
-    const eventsFile = path.join(cacheDir, `./liquidPledgingEvents_${process.env.NODE_ENV}.json`);
-
-    let state: {
-      pledges: PledgeInterface[],
-      admins: AdminInterface [],
-    } = <{
-      pledges: PledgeInterface[],
-      admins: AdminInterface [],
-    }>{
-      pledges: [null],
-      admins: [null],
-    };
-    if (fs.existsSync(stateFile)) {
-      state = JSON.parse(String(fs.readFileSync(stateFile)));
-    }
-    events = fs.existsSync(eventsFile) ? JSON.parse(String(fs.readFileSync(eventsFile))) : [];
-
-    if (updateState || updateEvents) {
-      let fromBlock = 0;
-      let fetchBlockNum: string | number = 'latest';
-      if (updateEvents) {
-        fromBlock = events.length > 0 ? events[events.length - 1].blockNumber + 1 : 0;
-        fetchBlockNum =
-          (await foreignWeb3.eth.getBlockNumber()) - config.get('blockchain.requiredConfirmations');
-      }
-
-      const fromPledgeIndex = state.pledges.length > 1 ? state.pledges.length : 1;
-      const fromPledgeAdminIndex = state.admins.length > 1 ? state.admins.length : 1;
-
-      let newEvents = [];
-      let newPledges = [];
-      let newAdmins = [];
-      let dataFetched = false;
-      let firstTry = true;
-      while (
-        !dataFetched
-        // error ||
-        // state.pledges.length <= 1 ||
-        // state.admins.length <= 1
-        ) {
-        if (!firstTry) {
-          logger.error('Some problem on fetching network info... Trying again!');
-          if (!Array.isArray(state.pledges) || state.pledges.length <= 1) {
-            logger.debug(`state.pledges: ${state.pledges}`);
-          }
-          if (!Array.isArray(state.admins) || state.admins.length <= 1) {
-            logger.debug(`state.admins: ${state.admins}`);
-          }
-        }
-        let [error, result] = await toFn(
-          Promise.all([
-            updateState ? getPledgeBatch(liquidPledging, fromPledgeIndex) : Promise.resolve(state.pledges),
-            updateState ? getAdminBatch(liquidPledging, fromPledgeAdminIndex) : Promise.resolve(state.admins),
-            updateEvents
-              ? liquidPledging.$contract.getPastEvents('allEvents', {
-                fromBlock,
-                toBlock: fetchBlockNum,
-              })
-              : Promise.resolve([]),
-          ]),
-        );
-        if (result) {
-          [newPledges, newAdmins, newEvents] = result;
-          dataFetched = true;
-        }
-
-        report.fetchedNewEventsCount = newEvents.length;
-        report.fetchedNewPledgeCount = newPledges.length;
-        report.fetchedNewPledgeAdminCount = newAdmins.length;
-
-        if (error && error instanceof Error) {
-          logger.error(`Error on fetching network info\n${error.stack}`);
-        }
-        firstTry = false;
-      }
-
-
-      if (updateState) {
-        state.pledges = [...state.pledges, ...newPledges];
-        state.admins = [...state.admins, ...newAdmins];
-        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-      }
-      if (updateEvents && newEvents) {
-        events = [...events, ...newEvents];
-        fs.writeFileSync(eventsFile, JSON.stringify(events, null, 2));
-      }
-    }
-
-    events.forEach(e => {
-      if (e.event === 'Transfer') {
-        const { transactionHash } = e;
-        const list: EventInterface[] = txHashTransferEventMap[transactionHash] || [];
-        if (list.length === 0) {
-          txHashTransferEventMap[transactionHash] = list;
-        }
-        list.push(e);
-      }
-    });
-
-    pledges = state.pledges;
-    admins = state.admins;
-    report.processedEvents = events.length;
-
-  } catch (e) {
-    logger.error('fetchBlockchainData error', e);
-    console.error('fetchBlockchainData error', e);
-    terminateScript(e.stack);
-  }
-
-};
 
 export const updateEntity = async (model, type) => {
   const donationQuery = {
@@ -1440,7 +1263,34 @@ const syncDonationsWithNetwork = async () => {
 
 const main = async () => {
   try {
-    await fetchBlockchainData();
+    homeWeb3 = (await instantiateWeb3(homeNodeUrl )).web3;
+    const instantiateForeignWeb3 = await instantiateWeb3(nodeUrl);
+    foreignWeb3 = instantiateForeignWeb3.web3;
+    liquidPledging = instantiateForeignWeb3.liquidPledging;
+    const blockChainData = await fetchBlockchainData({
+      report,
+      updateEvents,
+      updateState,
+      cacheDir,
+      foreignWeb3,
+      liquidPledging
+
+    });
+    events = blockChainData.events;
+    admins = blockChainData.admins;
+    pledges = blockChainData.pledges;
+
+
+    events.forEach(e => {
+      if (e.event === 'Transfer') {
+        const { transactionHash } = e;
+        const list: EventInterface[] = txHashTransferEventMap[transactionHash] || [];
+        if (list.length === 0) {
+          txHashTransferEventMap[transactionHash] = list;
+        }
+        list.push(e);
+      }
+    });
 
     if (!index && !fixConflicts) {
       terminateScript(null, 0);
@@ -1451,7 +1301,7 @@ const main = async () => {
        Find conflicts in milestone donation counter
       */
     const mongoUrl = config.get('mongodb') as string;
-    mongoose.connect(mongoUrl);
+     mongoose.connect(mongoUrl);
     const db = mongoose.connection;
 
     db.on('error', err => logger.error(`Could not connect to Mongo:\n${err.stack}`));
