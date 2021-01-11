@@ -1,10 +1,16 @@
-import {donationModel} from "../models/donations.model";
+import {donationModel, DonationStatus} from "../models/donations.model";
 import BigNumber from "bignumber.js";
-import {DonationObjectInterface, extendedDonation} from "../utils/interfaces";
+import {DonationObjectInterface, extendedDonation, PledgeInterface} from "../utils/interfaces";
+import {getTokenByAddress, getTokenCutoff} from "../utils/tokenUtility";
+import {getLogger} from "../utils/logger";
+
+const logger = getLogger();
 
 export async function fetchDonationsInfo():
-  Promise<{ pledgeNotUsedDonationListMap: any,
-    donationMap: DonationObjectInterface }> {
+  Promise<{
+    pledgeNotUsedDonationListMap: any,
+    donationMap: DonationObjectInterface
+  }> {
   const pledgeNotUsedDonationListMap = {}
   const donationMap: DonationObjectInterface = {};
 
@@ -66,4 +72,114 @@ export async function fetchDonationsInfo():
     donationMap,
     pledgeNotUsedDonationListMap
   }
+}
+
+
+export async function fixConflictInDonations(
+  options: {
+    unusedDonationMap: Map<string, any>,
+    donationMap: DonationObjectInterface,
+    fixConflicts:boolean,
+    pledges: PledgeInterface[]
+  }) {
+  const {unusedDonationMap,fixConflicts,
+    donationMap, pledges} = options;
+  const promises = [];
+  Object.values(donationMap).forEach(
+    ({
+       _id,
+       amount,
+       amountRemaining,
+       savedAmountRemaining,
+       status,
+       savedStatus,
+       pledgeId,
+       txHash,
+       tokenAddress,
+     }) => {
+      if (status === DonationStatus.FAILED) return;
+
+      const pledge: PledgeInterface = pledges[Number(pledgeId)] || <PledgeInterface>{};
+
+      if (unusedDonationMap.has(_id.toString())) {
+        logger.error(
+          `Donation was unused!\n${JSON.stringify(
+            {
+              _id,
+              amount: amount.toString(),
+              amountRemaining,
+              status,
+              pledgeId: pledgeId.toString(),
+              pledgeOwner: pledge.owner,
+              txHash,
+            },
+            null,
+            2,
+          )}`,
+        );
+        if (fixConflicts) {
+          logger.debug('Deleting...');
+          promises.push(donationModel.findOneAndDelete({_id}));
+
+        }
+      } else {
+        if (savedAmountRemaining && amountRemaining !== savedAmountRemaining) {
+          logger.error(
+            `Below donation should have remaining amount ${amountRemaining} but has ${savedAmountRemaining}\n${JSON.stringify(
+              {
+                _id,
+                amount,
+                amountRemaining,
+                status,
+                pledgeId,
+                txHash,
+              },
+              null,
+              2,
+            )}`,
+          );
+          if (Number(pledgeId) !== 0) {
+            logger.info(`Pledge Amount: ${pledge.amount}`);
+          }
+          if (fixConflicts) {
+            logger.debug('Updating...');
+            const {cutoff} = getTokenCutoff[getTokenByAddress(tokenAddress).symbol];
+            promises.push(
+              donationModel.updateOne(
+                {_id},
+                {
+                  $set: {
+                    amountRemaining,
+                    lessThanCutoff: cutoff.gt(amountRemaining),
+                  },
+                },
+              ),
+            );
+          }
+        }
+
+        if (savedStatus !== status) {
+          logger.error(
+            `Below donation status should be ${status} but is ${savedStatus}\n${JSON.stringify(
+              {
+                _id,
+                amount: amount.toString(),
+                amountRemaining,
+                status,
+                pledgeId: pledgeId.toString(),
+                txHash,
+              },
+              null,
+              2,
+            )}`,
+          );
+          if (fixConflicts) {
+            logger.debug('Updating...');
+            promises.push(donationModel.updateOne({_id}, {status}));
+          }
+        }
+      }
+    },
+  );
+  return Promise.all(promises);
 }

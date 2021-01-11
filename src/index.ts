@@ -12,7 +12,7 @@ import * as mongoose from 'mongoose';
 
 const {Kernel, AppProxyUpgradeable} = require('giveth-liquidpledging/build/contracts');
 import {setDonationUsdValue} from './utils/DonationUsdValueUtility';
-import {getTokenByAddress} from './utils/tokenUtility';
+import {getTokenByAddress, getTokenCutoff} from './utils/tokenUtility';
 import {donationModel, DonationMongooseDocument, DonationStatus} from './models/donations.model';
 import {pledgeAdminModel, AdminTypes, PledgeAdminMongooseDocument} from './models/pledgeAdmins.model';
 import {Logger} from 'winston';
@@ -26,7 +26,7 @@ import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {getHomeTxHash} from "./services/homeTxHashService";
 import {updateEntity} from "./services/projectService";
-import {fetchDonationsInfo} from "./services/donationService";
+import {fetchDonationsInfo, fixConflictInDonations} from "./services/donationService";
 
 const _groupBy = require('lodash.groupby');
 const dappMailerUrl = config.get('dappMailerUrl') as string;
@@ -133,13 +133,6 @@ const terminateScript = (message = '', code = 0) => {
     logger.end();
 };
 
-const symbolDecimalsMap = {};
-
-config.get('tokenWhitelist').forEach(({symbol, decimals}) => {
-    symbolDecimalsMap[symbol] = {
-        cutoff: new BigNumber(10 ** (18 - Number(decimals))),
-    };
-});
 
 async function getKernel() {
     const kernelAddress = await liquidPledging.kernel();
@@ -565,7 +558,7 @@ const handleToDonations = async ({
                 createdAt: new Date(timestamp * 1000),
             };
 
-            const {cutoff} = symbolDecimalsMap[token.symbol];
+            const {cutoff} = getTokenCutoff(token.symbol);
             model.lessThanCutoff = cutoff.gt(new BigNumber(model.amountRemaining));
 
             const donation = new donationModel(model);
@@ -715,107 +708,6 @@ const cancelProject = async (projectId: string) => {
     }
 };
 
-const fixConflictInDonations = unusedDonationMap => {
-    const promises = [];
-    Object.values(donationMap).forEach(
-        ({
-             _id,
-             amount,
-             amountRemaining,
-             savedAmountRemaining,
-             status,
-             savedStatus,
-             pledgeId,
-             txHash,
-             tokenAddress,
-         }) => {
-            if (status === DonationStatus.FAILED) return;
-
-            const pledge: PledgeInterface = pledges[Number(pledgeId)] || <PledgeInterface>{};
-
-            if (unusedDonationMap.has(_id.toString())) {
-                logger.error(
-                    `Donation was unused!\n${JSON.stringify(
-                        {
-                            _id,
-                            amount: amount.toString(),
-                            amountRemaining,
-                            status,
-                            pledgeId: pledgeId.toString(),
-                            pledgeOwner: pledge.owner,
-                            txHash,
-                        },
-                        null,
-                        2,
-                    )}`,
-                );
-                if (fixConflicts) {
-                    logger.debug('Deleting...');
-                    promises.push(donationModel.findOneAndDelete({_id}));
-
-                }
-            } else {
-                if (savedAmountRemaining && amountRemaining !== savedAmountRemaining) {
-                    logger.error(
-                        `Below donation should have remaining amount ${amountRemaining} but has ${savedAmountRemaining}\n${JSON.stringify(
-                            {
-                                _id,
-                                amount,
-                                amountRemaining,
-                                status,
-                                pledgeId,
-                                txHash,
-                            },
-                            null,
-                            2,
-                        )}`,
-                    );
-                    if (Number(pledgeId) !== 0) {
-                        logger.info(`Pledge Amount: ${pledge.amount}`);
-                    }
-                    if (fixConflicts) {
-                        logger.debug('Updating...');
-                        const {cutoff} = symbolDecimalsMap[getTokenByAddress(tokenAddress).symbol];
-                        promises.push(
-                            donationModel.updateOne(
-                                {_id},
-                                {
-                                    $set: {
-                                        amountRemaining,
-                                        lessThanCutoff: cutoff.gt(amountRemaining),
-                                    },
-                                },
-                            ),
-                        );
-                    }
-                }
-
-                if (savedStatus !== status) {
-                    logger.error(
-                        `Below donation status should be ${status} but is ${savedStatus}\n${JSON.stringify(
-                            {
-                                _id,
-                                amount: amount.toString(),
-                                amountRemaining,
-                                status,
-                                pledgeId: pledgeId.toString(),
-                                txHash,
-                            },
-                            null,
-                            2,
-                        )}`,
-                    );
-                    if (fixConflicts) {
-                        logger.debug('Updating...');
-                        promises.push(donationModel.updateOne({_id}, {status}));
-                    }
-                }
-            }
-        },
-    );
-    return Promise.all(promises);
-};
-
 const syncEventWithDb = async (eventData: EventInterface) => {
     const {event, transactionHash, logIndex, returnValues, blockNumber} = eventData;
     if (ignoredTransactions.some(it => it.txHash === transactionHash && it.logIndex === logIndex)) {
@@ -886,7 +778,12 @@ const syncDonationsWithNetwork = async () => {
     Object.values(pledgeNotUsedDonationListMap).forEach((list: any = []) =>
         list.forEach(item => unusedDonationMap.set(item._id, item)),
     );
-    await fixConflictInDonations(unusedDonationMap);
+    await fixConflictInDonations({
+        donationMap,
+        fixConflicts,
+        pledges,
+        unusedDonationMap
+    });
 };
 
 

@@ -1,4 +1,5 @@
-import {Token} from "./interfaces";
+import {extendedDonation, Token} from "./interfaces";
+import BigNumber from "bignumber.js";
 
 const config = require('config');
 
@@ -11,7 +12,7 @@ const ANY_TOKEN = {
 };
 let tokensByAddress;
 
-export function getTokenByAddress(address:string) :Token{
+export function getTokenByAddress(address: string): Token {
 
   if (!tokensByAddress) {
     tokensByAddress = {};
@@ -25,7 +26,8 @@ export function getTokenByAddress(address:string) :Token{
 
 
 let tokensByForeignAddress;
-export function getTokenByForeignAddress(foreignAddress:string):Token {
+
+export function getTokenByForeignAddress(foreignAddress: string): Token {
   if (!tokensByForeignAddress) {
     tokensByForeignAddress = {};
     config.get('tokenWhitelist').forEach(token => {
@@ -36,6 +38,23 @@ export function getTokenByForeignAddress(foreignAddress:string):Token {
   return tokensByForeignAddress[foreignAddress];
 }
 
-export function getTokenSymbolByAddress(address:string):string{
-  return address &&  getTokenByAddress(address) && getTokenByAddress(address).symbol
+export function getTokenSymbolByAddress(address: string): string {
+  return address && getTokenByAddress(address) && getTokenByAddress(address).symbol
+}
+
+const symbolDecimalsMap: {
+  [key: string]: {
+    cutoff: BigNumber
+  }
+} = {};
+config.get('tokenWhitelist').forEach(({symbol, decimals}) => {
+  symbolDecimalsMap[symbol] = {
+    cutoff: new BigNumber(10 ** (18 - Number(decimals))),
+  };
+});
+
+export function getTokenCutoff(symbol: string): {
+  cutoff: BigNumber
+} {
+  return  symbolDecimalsMap[symbol]
 }
