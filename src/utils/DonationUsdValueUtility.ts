@@ -1,21 +1,11 @@
-import { Logger } from 'winston';
-
 const BigNumber = require('bignumber.js');
-
 import { getTokenByAddress } from './tokenUtility';
 import { getLogger } from './logger';
 import {getHourlyCryptoConversion} from "./giveth-feathers-service";
 import {DonationMongooseDocument} from "../models/donations.model";
+const logger = getLogger();
 
-// Used by scripts to set usdValue of donations
-export class DonationUsdValueUtility {
-  services;
-  logger;
-  constructor(conversionRateModel, config, logger:Logger) {
-    this.logger = logger;
-  }
-
-  async setDonationUsdValue(donation :DonationMongooseDocument) {
+export async function setDonationUsdValue(donation :DonationMongooseDocument) {
     const { createdAt, tokenAddress, amount } = donation;
     try {
       const token = getTokenByAddress(tokenAddress);
@@ -29,7 +19,7 @@ export class DonationUsdValueUtility {
       );
       donation.usdValue = usdValue;
     } catch (e) {
+      logger.error('setDonationUsdValue error ', e)
     }
   }
-}
 
