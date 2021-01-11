@@ -6,10 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "./node_modules/.bin/tsc src/index.ts",
-    "start:local": "npm run build && NODE_ENV=local node src/index.js --update-network-cache  ",
-    "start:develop": "npm run build && NODE_ENV=develop node src/index.js --update-network-cache   --debug true ",
-    "start:beta": "npm run build && NODE_ENV=beta node src/index.js --update-network-cache  ",
-    "start:ts": "npm run build && NODE_ENV=simulation ./node_modules/.bin/ts-node src/index.ts --update-network-cache  "
+    "start:local": "npm run build && NODE_ENV=local node src/index.js",
+    "start:develop": "npm run build && NODE_ENV=develop node src/index.js",
+    "start:beta": "npm run build && NODE_ENV=beta node src/index.js",
+    "start:ts": "npm run build && NODE_ENV=simulation ./node_modules/.bin/ts-node src/index.ts"
   },
   "author": "",
   "license": "ISC",
@@ -42,7 +42,6 @@
     "web3-providers-ws": "^1.3.1",
     "web3-utils": "1.2.2",
     "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4.5.0",
-    "yargs": "^16.2.0"
+    "winston-daily-rotate-file": "^4.5.0"
   }
 }

@@ -1,4 +1,3 @@
-
 import {createProgressBar} from "./utils/progressBar";
 const config =require('config');
 import {
@@ -10,19 +9,12 @@ import {
 const Contract = require('web3-eth-contract');
 const ForeignGivethBridgeArtifact = require('giveth-bridge/build/ForeignGivethBridge.json');
 import { keccak256 } from 'web3-utils';
-
-const yargs = require('yargs');
 import BigNumber from 'bignumber.js';
 import * as mongoose from 'mongoose';
-import * as cliProgress from 'cli-progress';
-import * as _colors from 'colors';
-
-import { LiquidPledging, LiquidPledgingState } from 'giveth-liquidpledging';
 const { Kernel, AppProxyUpgradeable } = require('giveth-liquidpledging/build/contracts');
 import { toFn } from './utils/to';
 import { DonationUsdValueUtility } from './utils/DonationUsdValueUtility';
 import { getTokenByAddress, getTokenSymbolByAddress } from './utils/tokenUtility';
-import { createProjectHelper } from './utils/createProjectHelper';
 import { converionRateModel } from './models/conversionRates.model';
 import { donationModel, DonationMongooseDocument, DonationStatus } from './models/donations.model';
 import { milestoneModel, MilestoneMongooseDocument, MilestoneStatus } from './models/milestones.model';
@@ -32,8 +24,6 @@ import { Logger } from 'winston';
 import { getLogger } from './utils/logger';
 import { dacModel } from './models/dacs.model';
 import { ANY_TOKEN, getTransaction, ZERO_ADDRESS } from './utils/web3Helpers';
-// import { sendReportEmail } from './utils/emailService';
-import { getAdminBatch, getPledgeBatch } from './utils/liquidPledgingHelper';
 import { toBN } from 'web3-utils';
 import { Types } from 'mongoose';
 import { sendReportEmail, sendSimulationErrorEmail } from './utils/emailService';
@@ -65,30 +55,11 @@ const report = {
   fetchedNewPledgeCount: 0,
 };
 
-
-const { argv } = yargs
-  .option('dry-run', {
-    describe: 'enable dry run',
-    type: 'boolean',
-    default: false,
-  })
-  .option('update-network-cache', {
-    describe: 'update network state and events cache',
-    type: 'boolean',
-    default: false,
-  })
-  .option('debug', {
-    describe: 'produce debugging log',
-    type: 'boolean',
-  })
-  .version(false)
-  .help();
 const cacheDir = config.get('cacheDir');
-const logDir = config.get('logDir');
-const updateState = argv['update-network-cache'];
-const updateEvents = argv['update-network-cache'];
-const index = !argv['dry-run'];
-const fixConflicts = !argv['dry-run'];
+const updateState = config.get('updateNetworkCache');
+const updateEvents = config.get('updateNetworkCache');
+const index = !config.get('dryRun');
+const fixConflicts = !config.get('dryRun');
 // const ignoredTransactions  = require('./eventProcessingHelper.json');
 const ignoredTransactions = [];
 
