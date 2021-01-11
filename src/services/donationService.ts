@@ -16,9 +16,8 @@ export async function fetchDonationsInfo():
 
   // TODO: pendingAmountRemaining is not considered in updating, it should be removed for successful transactions
 
-  const donations = await donationModel.find({});
-  for (const donation of donations) {
-    const {
+  await donationModel.find({}).cursor().eachAsync(
+    async ({
       _id,
       amount,
       amountRemaining,
@@ -36,7 +35,7 @@ export async function fetchDonationsInfo():
       isReturn,
       usdValue,
       createdAt,
-    } = donation;
+    })=>{
 
     const list = pledgeNotUsedDonationListMap[pledgeId.toString()] || [];
     if (list.length === 0) {
@@ -68,6 +67,7 @@ export async function fetchDonationsInfo():
     list.push(item);
     donationMap[_id.toString()] = item as unknown as extendedDonation;
   }
+  );
   return {
     donationMap,
     pledgeNotUsedDonationListMap

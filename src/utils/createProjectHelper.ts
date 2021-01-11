@@ -6,10 +6,10 @@ import { isAddress } from 'web3-utils';
 import {
   removeHexPrefix,
   executeRequestsAsBatch,
-  ANY_TOKEN, getTransaction,
+  getTransaction,
 } from './web3Helpers';
 import { MilestoneTypes } from '../models/milestones.model';
-import { getTokenByForeignAddress } from './tokenUtility';
+import {ANY_TOKEN, getTokenByForeignAddress} from './tokenUtility';
 import { ProjectInterface } from './interfaces';
 import { DacStatus } from '../models/dacs.model';
 
