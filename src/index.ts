@@ -25,7 +25,7 @@ import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {getHomeTxHash} from "./services/homeTxHashService";
-import {updateEntity} from "./services/projectService";
+import {cancelProject, updateEntity} from "./services/projectService";
 import {fetchDonationsInfo, fixConflictInDonations} from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
 
@@ -628,37 +628,6 @@ const handleToDonations = async ({
   }
 };
 
-const revertProjectDonations = async projectId => {
-  const donations: any = ownerPledgeAdminIdChargedDonationMap[projectId] || {};
-  const values = Object.values(donations);
-  const revertExceptionStatus = [DonationStatus.PAYING, DonationStatus.PAID];
-
-  for (let i = 0; i < values.length; i += 1) {
-    const donation: any = values[i];
-    if (!new BigNumber(donation.amountRemaining).isZero() && !revertExceptionStatus.includes(donation.status)) {
-      donation.status = DonationStatus.CANCELED;
-    }
-
-    // Remove all donations of same pledgeId from charged donation list that are not Paying or Paid
-    // because all will be reverted
-  }
-};
-
-const cancelProject = async (projectId: string) => {
-  admins[projectId].isCanceled = true;
-  await revertProjectDonations(projectId);
-
-  const projectIdStr = String(projectId);
-  for (let index = 1; index < admins.length; index += 1) {
-    const admin = admins[index];
-
-    if (admin.parentProject === projectIdStr) {
-      admin.isCanceled = true;
-      // eslint-disable-next-line no-await-in-loop
-      await revertProjectDonations(index);
-    }
-  }
-};
 
 const syncEventWithDb = async (eventData: EventInterface) => {
   const {event, transactionHash, logIndex, returnValues, blockNumber} = eventData;
@@ -695,7 +664,11 @@ const syncEventWithDb = async (eventData: EventInterface) => {
       `Cancel project ${idProject}: ${JSON.stringify(admins[Number(idProject)], null, 2)}`,
     );
     // eslint-disable-next-line no-await-in-loop
-    await cancelProject(idProject);
+    await cancelProject({
+      ownerPledgeAdminIdChargedDonationMap,
+      projectId:idProject,
+      admins
+    });
   }
 };
 

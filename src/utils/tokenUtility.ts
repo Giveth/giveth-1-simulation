@@ -4,7 +4,7 @@ import BigNumber from "bignumber.js";
 
 const config = require('config');
 
-const ANY_TOKEN = {
+export const ANY_TOKEN = {
   name: 'ANY_TOKEN',
   address: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
   foreignAddress: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
