@@ -55,7 +55,7 @@ export async function fetchDonationsInfo():
       ownerId,
       ownerType,
       ownerTypeId,
-      intendedProjectId,
+      intendedProjectId:String(intendedProjectId),
       giverAddress,
       pledgeId: pledgeId.toString(),
       tokenAddress,
