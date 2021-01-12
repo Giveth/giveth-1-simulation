@@ -20,7 +20,7 @@ interface EntityType extends DacMongooseDocument, CampaignMongooseDocument, Mile
   maxAmount: string,
 }
 
-export const updateEntity = async (type: string) => {
+export const updateEntityDonationsCounter = async (type: string) => {
   let model: Model<EntityType>;
   const donationQuery = {
     // $select: ['amount', 'giverAddress', 'amountRemaining', 'token', 'status', 'isReturn'],
@@ -66,6 +66,7 @@ export const updateEntity = async (type: string) => {
   });
   progressBar.start(entities.length);
   for (const entity of entities) {
+    console.log("")
     progressBar.increment();
     const oldDonationCounters = entity.donationCounters;
     const query = {...donationQuery};
@@ -91,8 +92,6 @@ export const updateEntity = async (type: string) => {
     const donationCounters = Object.keys(groupedDonations).map(symbol => {
       const tokenDonations = groupedDonations[symbol];
       const returnedTokenDonations = groupedReturnedDonations[symbol] || [];
-
-      // eslint-disable-next-line prefer-const
       let {totalDonated, currentBalance} = tokenDonations.reduce(
         (accumulator, d) => ({
           totalDonated: d.isReturn

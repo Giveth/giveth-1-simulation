@@ -118,3 +118,10 @@ export interface Token{
   decimals:number,
   rateEqSymbol?:string
 }
+
+export interface BaseCodeData {
+  campaignBase:any,
+  lppCappedMilestoneBase:any,
+  lpMilestoneBase:any,
+  bridgedMilestoneBase:any,
+}

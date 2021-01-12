@@ -142,19 +142,22 @@ export async function fixConflictInDonations(
             logger.info(`Pledge Amount: ${pledge.amount}`);
           }
           if (fixConflicts) {
-            logger.debug('Updating...');
-            const {cutoff} = getTokenCutoff[getTokenByAddress(tokenAddress).symbol];
-            promises.push(
-              donationModel.updateOne(
-                {_id},
-                {
-                  $set: {
-                    amountRemaining,
-                    lessThanCutoff: cutoff.gt(amountRemaining),
+            const token = getTokenByAddress(tokenAddress);
+            const tokenCutoff = token && getTokenCutoff(token.symbol);
+            if(token && tokenCutoff && tokenCutoff.cutoff){
+              promises.push(
+                donationModel.updateOne(
+                  {_id},
+                  {
+                    $set: {
+                      amountRemaining,
+                      lessThanCutoff: tokenCutoff.cutoff.gt(amountRemaining),
+                    },
                   },
-                },
-              ),
-            );
+                ),
+              );
+            }
+
           }
         }
 

@@ -14,7 +14,6 @@ export const ANY_TOKEN = {
 let tokensByAddress;
 
 export function getTokenByAddress(address: string): Token {
-
   if (!tokensByAddress) {
     tokensByAddress = {};
     config.get('tokenWhitelist').forEach(token => {

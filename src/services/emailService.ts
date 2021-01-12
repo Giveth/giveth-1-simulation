@@ -100,7 +100,7 @@ export const sendReportEmail = async (reportData: ReportInterface,
 
 };
 
-export const sendSimulationErrorEmail = async (error: string,
+export const sendSimulationErrorEmail = async (error: any,
                                       givethDevMailList:string[],
                                       dappMailerUrl :string,
                                       dappMailerSecret: string

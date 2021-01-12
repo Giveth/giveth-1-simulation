@@ -18,14 +18,12 @@ import {pledgeAdminModel, AdminTypes, PledgeAdminMongooseDocument} from './model
 import {Logger} from 'winston';
 import {getLogger} from './utils/logger';
 import {getActionTakerAddress, getHomeTxHashForDonation, getTransaction} from './utils/web3Helpers';
-import {Types} from 'mongoose';
 import {sendReportEmail, sendSimulationErrorEmail} from './services/emailService';
 import {syncDacs} from './services/dacServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
-import {getHomeTxHash} from "./services/homeTxHashService";
-import {cancelProject, updateEntity} from "./services/projectService";
+import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {fetchDonationsInfo, fixConflictInDonations} from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
 
@@ -579,7 +577,7 @@ const handleToDonations = async ({
       if (fixConflicts) {
         logger.debug('Updating...');
         toDonation.parentDonations = usedFromDonations;
-        await donationModel.update(
+        await donationModel.updateOne(
           {_id: toDonation._id},
           {parentDonations: usedFromDonations},
         );
@@ -766,7 +764,7 @@ const main = async () => {
           liquidPledging,
           fixConflicts,
           AppProxyUpgradeable,
-          kernel: getKernel()
+          kernel: await getKernel()
         });
         await syncPledgeAdminsAndProjects({
           report,
@@ -776,12 +774,12 @@ const main = async () => {
           liquidPledging,
           fixConflicts,
           AppProxyUpgradeable,
-          kernel: getKernel()
+          kernel: await getKernel()
         });
         await syncDonationsWithNetwork();
-        await updateEntity(AdminTypes.DAC);
-        await updateEntity(AdminTypes.CAMPAIGN);
-        await updateEntity(AdminTypes.MILESTONE);
+        await updateEntityDonationsCounter(AdminTypes.DAC);
+        await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
+        await updateEntityDonationsCounter(AdminTypes.MILESTONE);
         await updateMilestonesFinalStatus(
           {
             report,
@@ -801,7 +799,7 @@ const main = async () => {
       } catch (e) {
         console.log('error syncing ... ', e);
         if (config.get('emailSimulationError')) {
-          sendSimulationErrorEmail(JSON.stringify(e, null, 4),
+          sendSimulationErrorEmail(e.toString(),
             givethDevMailList,
             dappMailerUrl,
             dappMailerSecret
