@@ -8,7 +8,7 @@ This project runs to fix conflicts between the [Giveth-Feathers](https://github.
 - [Getting Started](#getting-started)
     - [Install](#install)
     - [Run Script](#run-script)
-- [What do this scripts](#what_do)
+- [What do this project](#what-do-this-project)
 
 
 ## Getting Started
@@ -81,7 +81,7 @@ Note : you can change any field of config as you want
 2. `npm run build` This transpile the project and generate an `index.js`
 3. `npm run start:develop`
 
-### What do this scripts
+### What do this project
 * Getting all events from network (and cache it to in next runs
   just get new ones)
 * Getting all states from network (and cache it to in next runs
