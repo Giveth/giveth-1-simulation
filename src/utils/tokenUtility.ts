@@ -1,4 +1,4 @@
-import {extendedDonation, Token} from "./interfaces";
+import {ExtendedDonation, Token} from "./interfaces";
 
 import BigNumber from "bignumber.js";
 

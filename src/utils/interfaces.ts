@@ -62,18 +62,18 @@ export interface DelegateInfoInterface {
 }
 
 
-export interface extendedDonation extends DonationMongooseDocument {
+export interface ExtendedDonation extends DonationMongooseDocument {
   savedStatus?: string,
   savedAmountRemaining?: string,
 }
 
 
 export interface DonationListObjectInterface {
-  [key: string]: extendedDonation[]
+  [key: string]: ExtendedDonation[]
 }
 
 export interface DonationObjectInterface {
-  [key: string]: extendedDonation
+  [key: string]: ExtendedDonation
 }
 
 export interface TransferInfoInterface {

@@ -1,6 +1,6 @@
 import {donationModel, DonationStatus} from "../models/donations.model";
 import BigNumber from "bignumber.js";
-import {DonationObjectInterface, extendedDonation, PledgeInterface} from "../utils/interfaces";
+import {DonationObjectInterface, ExtendedDonation, PledgeInterface} from "../utils/interfaces";
 import {getTokenByAddress, getTokenCutoff} from "../utils/tokenUtility";
 import {getLogger} from "../utils/logger";
 
@@ -65,7 +65,7 @@ export async function fetchDonationsInfo():
     };
 
     list.push(item);
-    donationMap[_id.toString()] = item as unknown as extendedDonation;
+    donationMap[_id.toString()] = item as unknown as ExtendedDonation;
   }
   );
   return {
