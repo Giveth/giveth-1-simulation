@@ -15,6 +15,7 @@ export const DonationStatus = {
   CANCELED: 'Canceled',
   REJECTED: 'Rejected',
   FAILED: 'Failed',
+  RECOVERED: 'Recovered',
 };
 
 
@@ -79,6 +80,8 @@ const donation = new Schema(
     usdValue: { type: Number, default: 0 },
     txNonce: { type: Number },
     comment: { type: String },
+    isRecovered:{type: Boolean}
+
   },
   {
     timestamps: true,

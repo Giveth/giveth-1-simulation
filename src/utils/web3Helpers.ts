@@ -84,7 +84,8 @@ export async function getTransaction(
   const web3 = isHome ? homeWeb3 : foreignWeb3;
   let transaction = await transactionModel.findOne(
     {
-      hash: txHash, isHome,
+      hash: txHash,
+      isHome :Boolean(isHome),
       blockNumber: {$exists:true},
       timestamp: {$exists:true},
     });
@@ -102,6 +103,7 @@ export async function getTransaction(
       blockNumber,
       timestamp: new Date(timestamp * 1000),
       isHome,
+      isRecovered:true
     }, { upsert: true, new: true });
   return transaction;
 

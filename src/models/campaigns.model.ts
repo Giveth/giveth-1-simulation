@@ -7,6 +7,7 @@ export const CampaignStatus = {
     PENDING: 'Pending',
     CANCELED: 'Canceled',
     FAILED: 'Failed',
+    RECOVERED: 'Recovered',
 };
 
 export interface CampaignMongooseDocument extends Document {
@@ -48,6 +49,7 @@ const campaign = new Schema(
         commitTime: {type: Number},
         communityUrl: {type: String},
         archivedMilestones: {type: [Number]},
+        isRecovered:{type: Boolean}
     },
     {
         timestamps: true,

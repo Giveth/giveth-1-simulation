@@ -14,6 +14,7 @@ const transaction = new Schema(
     from: { type: String, required: true },
     blockNumber: { type: Number },
     isHome: { type: Boolean, default: false },
+    isRecovered:{type: Boolean},
     timestamp: { type: Date },
   },
   {

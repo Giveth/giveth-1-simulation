@@ -1,10 +1,10 @@
 import {
-  createProjectHelper, getCampaignDataForCreate,
+  getCampaignDataForCreate,
   getMilestoneDataForCreate,
   getMilestoneTypeByProjectId
 } from "../utils/createProjectHelper";
 import {createProgressBar} from "../utils/progressBar";
-import {EventInterface, ProjectInterface, ReportInterface} from "../utils/interfaces";
+import {EventInterface, ReportInterface} from "../utils/interfaces";
 import {AdminTypes, pledgeAdminModel} from "../models/pledgeAdmins.model";
 import {campaignModel, CampaignStatus} from "../models/campaigns.model";
 import {milestoneModel, MilestoneStatus} from "../models/milestones.model";
@@ -38,7 +38,7 @@ const createMilestoneForPledgeAdmin = async (options: {
   });
   return new milestoneModel({
     ...createMilestoneData,
-    status: MilestoneStatus.PENDING,
+    status: MilestoneStatus.RECOVERED,
     campaignId: campaign._id,
   }).save();
 };
@@ -60,7 +60,7 @@ const createCampaignForPledgeAdmin = async (options:
   });
   return new campaignModel({
     ...createCampaignData,
-    status: CampaignStatus.CANCELED,
+    status: CampaignStatus.RECOVERED,
   }).save();
 };
 
@@ -123,6 +123,7 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
           id: Number(idProject),
           type: AdminTypes.MILESTONE,
           typeId: 'notExists because create milestone failed',
+          isRecovered :true
         }).save();
         logger.error('create pledgeAdmin without creating milestone', {idProject});
       }
@@ -148,6 +149,7 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
       id: Number(idProject),
       type,
       typeId: entity._id.toString(),
+      isRecovered :true
     });
     const result = await newPledgeAdmin.save();
     report.createdPledgeAdmins++;
@@ -184,25 +186,12 @@ export const syncPledgeAdminsAndProjects = async (
   } = options;
   console.log('syncPledgeAdminsAndProjects called', {fixConflicts});
   if (!fixConflicts) return;
-  const {
-    getMilestoneTypeByProjectId,
-    getCampaignDataForCreate,
-    getMilestoneDataForCreate,
-  } = await createProjectHelper({
-    web3: foreignWeb3,
-    homeWeb3,
-    liquidPledging,
-    kernel,
-    AppProxyUpgradeable,
-  });
-
   const startTime = new Date();
   console.log('Syncing PledgeAdmins with events .... ');
   const progressBar = createProgressBar({title: 'Syncing pladgeAdmins with events'});
   progressBar.start(events.length, 0);
   for (let i = 0; i < events.length; i += 1) {
     progressBar.update(i);
-
     const {event, transactionHash, returnValues} = events[i];
     await createPledgeAdminAndProjectsIfNeeded({
       kernel,

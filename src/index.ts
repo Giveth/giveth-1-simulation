@@ -376,6 +376,7 @@ const handleToDonations = async ({
       status,
       giverAddress,
       isReturn,
+      isRecovered :true
     };
     const homeTxHash = await getHomeTxHashForDonation({
       txHash: transactionHash,
@@ -413,6 +414,7 @@ const handleToDonations = async ({
           id: Number(toOwnerId),
           type: AdminTypes.GIVER,
           typeId: toOwnerAdmin.addr,
+          isRecovered:true
         });
         await toPledgeAdmin.save();
         report.createdPledgeAdmins++;

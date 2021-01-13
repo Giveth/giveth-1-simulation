@@ -77,7 +77,7 @@ with these data
 
 }
 ```
-Note : you can change any field of config as you want
+
 2. `npm run build` This transpile the project and generate an `index.js`
 3. `npm run start:develop`
 

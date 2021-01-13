@@ -1,4 +1,4 @@
-import {createProjectHelper} from "../utils/createProjectHelper";
+import {getDacDataForCreate} from "../utils/createProjectHelper";
 import {pledgeAdminModel} from "../models/pledgeAdmins.model";
 import {getTransaction} from "../utils/web3Helpers";
 import {dacModel} from "../models/dacs.model";
@@ -23,16 +23,6 @@ export const syncDacs = async (options:{
     report} = options;
     console.log('syncDacs called', { fixConflicts });
     if (!fixConflicts) return;
-    const {
-        getDacDataForCreate,
-    } = await createProjectHelper({
-        web3: foreignWeb3,
-        homeWeb3,
-        liquidPledging,
-        kernel,
-        AppProxyUpgradeable,
-    });
-
     const startTime = new Date();
     const progressBar = createProgressBar({ title: 'Syncing Dacs with events' });
     progressBar.start(events.length, 0);
@@ -52,6 +42,9 @@ export const syncDacs = async (options:{
             let dac = await dacModel.findOne({ txHash:transactionHash });
             if (!dac) {
                 const dacData = await getDacDataForCreate({
+                    homeWeb3,
+                    foreignWeb3,
+                    liquidPledging,
                     from,
                     txHash: transactionHash,
                     delegateId,
@@ -61,7 +54,7 @@ export const syncDacs = async (options:{
                 logger.info('created dac ', dac);
             }
             await new pledgeAdminModel(
-                { id: Number(delegateId), type: 'dac', typeId: dac._id }).save();
+                { id: Number(delegateId), type: 'dac', typeId: dac._id, isRecovered :true }).save();
             report.createdPledgeAdmins++;
 
         } catch (e) {
