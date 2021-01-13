@@ -4,7 +4,7 @@ const config = require('config');
 import {
   AdminInterface,
   DelegateInfoInterface,
-  DonationListObjectInterface, DonationObjectInterface, EventInterface, extendedDonation,
+  DonationListObjectInterface, DonationObjectInterface, EventInterface, ExtendedDonation,
   PledgeInterface, TransferInfoInterface,
 } from './utils/interfaces';
 import BigNumber from 'bignumber.js';
