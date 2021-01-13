@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "tslint:latest",
+    "tslint-eslint-rules",
+    "tslint-config-prettier"
+  ],
+  "rules": {
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "comment-format": false,
+    "no-console": true,
+    "variable-name": [
+      true,
+      "ban-keywords",
+      "check-format"
+    ],
+    "only-arrow-functions": false,
+    "class-name": true,
+    "file-name-casing": false,
+    "ordered-imports": false,
+    "no-submodule-imports": false,
+    "member-ordering": false,
+    "prefer-for-of": false,
+    "array-type": false,
+    "object-literal-sort-keys": false,
+    "no-var-requires": true,
+    "no-string-literal": false,
+    "no-implicit-dependencies": false,
+    "max-classes-per-file": false,
+    "no-empty-interface": false,
+    "prefer-object-spread": false
+  }
+}
