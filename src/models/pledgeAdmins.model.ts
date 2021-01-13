@@ -22,6 +22,8 @@ const pledgeAdmin = new Schema(
       enum: Object.values(AdminTypes),
     },
     typeId: { type: String },
+    isRecovered:{type: Boolean}
+
   },
   {
     timestamps: true,

@@ -7,6 +7,7 @@ export const DacStatus = {
   PENDING: 'Pending',
   CANCELED: 'Canceled',
   FAILED: 'Failed',
+  RECOVERED: 'Recovered',
 };
 
 export interface DacMongooseDocument extends Document {
@@ -47,6 +48,8 @@ const dac = new Schema(
     url: { type: String },
     customThanksMessage: { type: String },
     prevUrl: { type: String }, // To store deleted/cleared lost ipfs values
+    isRecovered:{type: Boolean}
+
   },
   {
     timestamps: true,

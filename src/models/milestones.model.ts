@@ -18,6 +18,7 @@ export const MilestoneStatus = {
   PAID: 'Paid',
   FAILED: 'Failed',
   ARCHIVED: 'Archived',
+  RECOVERED: 'Recovered',
 };
 
 export const MilestoneTypes = {
@@ -88,6 +89,7 @@ const milestone = new Schema(
     messageContext: { type: String },
     tokenAddress: { type: String, required: true },
     projectAddedAt: { type: Date }, // Store the time milestone is accepted or added by campaign owner
+    isRecovered:{type: Boolean}
   },
   {
     timestamps: true,
