@@ -40,6 +40,7 @@ with these data
 ```
 {
   "mongodb": "mongodb://localhost:27017/giveth-develop",
+  "givethFeathersUrl": "https://feathers.develop.giveth.io",
   "logDir": "data/log",
   "cacheDir": "data/cache",
   "logLevel": "info",
