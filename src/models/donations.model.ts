@@ -25,6 +25,7 @@ export interface DonationMongooseDocument extends  Document {
   createdAt ?:Date,
   amount :string,
   amountRemaining:string,
+  pendingAmountRemaining:string,
   pledgeId:string,
   status:string,
   mined:boolean,

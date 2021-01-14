@@ -4,7 +4,7 @@ const config = require('config');
 import {
   AdminInterface,
   DelegateInfoInterface,
-  DonationListObjectInterface, DonationObjectInterface, EventInterface, ExtendedDonation,
+  DonationListObjectInterface, DonationObjectInterface, EventInterface,
   PledgeInterface, TransferInfoInterface,
 } from './utils/interfaces';
 import BigNumber from 'bignumber.js';
@@ -24,7 +24,11 @@ import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
-import {fetchDonationsInfo, fixConflictInDonations} from "./services/donationService";
+import {
+  fetchDonationsInfo,
+  fixConflictInDonations,
+  unsetPendingAmountRemainingFromCommittedDonations
+} from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
@@ -48,6 +52,7 @@ const report = {
   fetchedNewEventsCount: 0,
   fetchedNewPledgeAdminCount: 0,
   fetchedNewPledgeCount: 0,
+  removedPendingAmountRemainingCount:0
 };
 
 const cacheDir = config.get('cacheDir');
@@ -788,6 +793,7 @@ const main = async () => {
             events
           }
         );
+        await unsetPendingAmountRemainingFromCommittedDonations({report});
         console.table(report);
         if (config.get('emailReport')) {
           await sendReportEmail(report,
