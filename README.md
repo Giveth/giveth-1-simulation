@@ -99,4 +99,5 @@ or for any reason the donations stuck in `Pending` status
 `Dac` donationsCounter and it's not up to date, this script resolve that
 * **Update milestone statuses**: if the status of any milestone is not up to date and not synced with network, 
 the script will resolve that and update the milestone
+* **Unset pendingAmountRemaining from committed donations**
 

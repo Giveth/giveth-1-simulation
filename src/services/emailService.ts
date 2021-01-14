@@ -45,32 +45,36 @@ export const sendReportEmail = async (reportData: ReportInterface,
                   <td style='${tableCellStyle}'>${reportData.syncMilestoneSpentTime} seconds</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdDacs</td>
+                  <td style='${tableCellStyle}'>createdDacs count</td>
                   <td style='${tableCellStyle}'>${reportData.createdDacs}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdCampaigns</td>
+                  <td style='${tableCellStyle}'>createdCampaigns count</td>
                   <td style='${tableCellStyle}'>${reportData.createdCampaigns}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdMilestones</td>
+                  <td style='${tableCellStyle}'>createdMilestones count</td>
                   <td style='${tableCellStyle}'>${reportData.createdMilestones}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdDonations</td>
+                  <td style='${tableCellStyle}'>createdDonations count</td>
                   <td style='${tableCellStyle}'>${reportData.createdDonations}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>correctFailedDonations</td>
+                  <td style='${tableCellStyle}'>correctFailedDonations count</td>
                   <td style='${tableCellStyle}'>${reportData.correctFailedDonations}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdPledgeAdmins</td>
+                  <td style='${tableCellStyle}'>createdPledgeAdmins count</td>
                   <td style='${tableCellStyle}'>${reportData.createdPledgeAdmins}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>updatedMilestoneStatus</td>
+                  <td style='${tableCellStyle}'>updatedMilestoneStatus count</td>
                   <td style='${tableCellStyle}'>${reportData.updatedMilestoneStatus}</td>
+                </tr>
+                <tr>
+                  <td style='${tableCellStyle}'>removedPendingAmountRemainingCount</td>
+                  <td style='${tableCellStyle}'>${reportData.removedPendingAmountRemainingCount}</td>
                 </tr>
               </table>
       `,

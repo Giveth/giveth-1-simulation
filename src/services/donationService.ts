@@ -1,6 +1,6 @@
 import {donationModel, DonationStatus} from "../models/donations.model";
 import BigNumber from "bignumber.js";
-import {DonationObjectInterface, ExtendedDonation, PledgeInterface} from "../utils/interfaces";
+import {DonationObjectInterface, ExtendedDonation, PledgeInterface, ReportInterface} from "../utils/interfaces";
 import {getTokenByAddress, getTokenCutoff} from "../utils/tokenUtility";
 import {getLogger} from "../utils/logger";
 
@@ -74,6 +74,26 @@ export async function fetchDonationsInfo():
   }
 }
 
+
+export async function unsetPendingAmountRemainingFromCommittedDonations(options:{
+  report :ReportInterface
+}){
+  const {report} = options;
+  const query =  {status :DonationStatus.COMMITTED,
+    pendingAmountRemaining :{$exists :true}};
+  const committedDonationsWithPendingAmountRemaining =await donationModel.find(query);
+  report.removedPendingAmountRemainingCount = committedDonationsWithPendingAmountRemaining.length;
+  console.log('Removed pendingAmountFromDonations count', committedDonationsWithPendingAmountRemaining.length)
+  committedDonationsWithPendingAmountRemaining.forEach(donation =>{
+    logger.error('Remove pendingAmountFromDonations',{
+      _id:donation._id,
+      pendingAmountRemaining :donation.pendingAmountRemaining
+    })
+  })
+  await donationModel.updateMany(query,{$unset:{pendingAmountRemaining:1}} )
+
+
+}
 
 export async function fixConflictInDonations(
   options: {
