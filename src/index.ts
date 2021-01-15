@@ -85,6 +85,7 @@ let homeWeb3;
 let liquidPledging;
 
 console.log(cacheDir);
+console.log('start simulation ', new Date())
 const logger: Logger = getLogger();
 
 
@@ -795,6 +796,7 @@ const main = async () => {
         );
         await unsetPendingAmountRemainingFromCommittedDonations({report});
         console.table(report);
+        console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {
           await sendReportEmail(report,
             givethDevMailList,

@@ -2,7 +2,8 @@ import {milestoneModel, MilestoneMongooseDocument, MilestoneStatus} from "../mod
 import {createProgressBar} from "../utils/progressBar";
 import {EventInterface, ReportInterface} from "../utils/interfaces";
 import {ZERO_ADDRESS} from "../utils/web3Helpers";
-
+import {getLogger} from "../utils/logger";
+const logger = getLogger();
 
 
 const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongooseDocument) => {
@@ -56,7 +57,12 @@ export const updateMilestonesFinalStatus = async (options :{
         message += `Project ID: ${projectId}\n`;
         message += `Events: ${events.toString()}\n`;
         const expectedStatus = getExpectedStatus(matchedEvents, milestone);
-        if (status !== expectedStatus ){
+        if (expectedStatus && status !== expectedStatus ){
+            logger.error("should update milestone status",{
+                 _id:milestone._id,
+                status,
+                expectedStatus
+            })
             await milestoneModel.updateOne({ _id: milestone._id }, { status: expectedStatus, mined: true });
             report.updatedMilestoneStatus ++;
         }
