@@ -61,6 +61,14 @@ export const sendReportEmail = async (reportData: ReportInterface,
                   <td style='${tableCellStyle}'>${reportData.createdDonations}</td>
                 </tr>
                 <tr>
+                  <td style='${tableCellStyle}'>deletedDonations count</td>
+                  <td style='${tableCellStyle}'>${reportData.deletedDonations}</td>
+                </tr>
+                <tr>
+                  <td style='${tableCellStyle}'>updatedDonations count</td>
+                  <td style='${tableCellStyle}'>${reportData.updatedDonations}</td>
+                </tr>
+                <tr>
                   <td style='${tableCellStyle}'>correctFailedDonations count</td>
                   <td style='${tableCellStyle}'>${reportData.correctFailedDonations}</td>
                 </tr>

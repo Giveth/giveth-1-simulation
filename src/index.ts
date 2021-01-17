@@ -45,6 +45,8 @@ const report = {
   createdCampaigns: 0,
   createdMilestones: 0,
   createdDonations: 0,
+  updatedDonations: 0,
+  deletedDonations: 0,
   createdPledgeAdmins: 0,
   updatedMilestoneStatus: 0,
   processedEvents: 0,
@@ -209,6 +211,7 @@ const handleFromDonations = async (from: string, to: string,
 
         if (fixConflicts) {
           logger.debug('Updating...');
+          report.updatedDonations ++;
           await donationModel.updateOne(
             {_id: toFixDonation._id},
             {status: toFixDonation.status, pledgeId: to},
@@ -714,6 +717,7 @@ const syncDonationsWithNetwork = async () => {
     donationMap,
     fixConflicts,
     pledges,
+    report,
     unusedDonationMap
   });
 };
