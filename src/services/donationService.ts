@@ -100,10 +100,11 @@ export async function fixConflictInDonations(
     unusedDonationMap: Map<string, any>,
     donationMap: DonationObjectInterface,
     fixConflicts:boolean,
+    report:ReportInterface,
     pledges: PledgeInterface[]
   }) {
   const {unusedDonationMap,fixConflicts,
-    donationMap, pledges} = options;
+    donationMap, pledges, report} = options;
   const promises = [];
   Object.values(donationMap).forEach(
     ({
@@ -139,6 +140,7 @@ export async function fixConflictInDonations(
         );
         if (fixConflicts) {
           logger.debug('Deleting...');
+          report.deletedDonations ++;
           promises.push(donationModel.findOneAndDelete({_id}));
 
         }
