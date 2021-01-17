@@ -79,7 +79,7 @@ export async function unsetPendingAmountRemainingFromCommittedDonations(options:
   report :ReportInterface
 }){
   const {report} = options;
-  const query =  {status :DonationStatus.COMMITTED,
+  const query =  {status :{$ne: DonationStatus.PENDING},
     pendingAmountRemaining :{$exists :true}};
   const committedDonationsWithPendingAmountRemaining =await donationModel.find(query);
   report.removedPendingAmountRemainingCount = committedDonationsWithPendingAmountRemaining.length;
