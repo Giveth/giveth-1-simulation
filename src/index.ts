@@ -528,6 +528,7 @@ const handleToDonations = async ({
       const _id = donation._id.toString();
       expectedToDonation._id = _id;
       expectedToDonation.savedAmountRemaining = model.amountRemaining;
+      expectedToDonation.savedStatus = expectedToDonation.status;
       donationMap[_id] = {...expectedToDonation};
       logger.info(
         `donation created: ${JSON.stringify(
