@@ -86,9 +86,10 @@ let foreignWeb3;
 let homeWeb3;
 let liquidPledging;
 
+const logger: Logger = getLogger();
 console.log(cacheDir);
 console.log('start simulation ', new Date())
-const logger: Logger = getLogger();
+logger.info(`start simulation ${new Date()}`)
 
 
 const terminateScript = (message = '', code = 0) => {
@@ -171,7 +172,7 @@ const handleFromDonations = async (from: string, to: string,
 
     // Trying to find the matching donation from DB
     let candidateToDonationList = toUnusedDonationList.filter(
-      item => item.txHash === transactionHash && item.amountRemaining.eq(0),
+      item => item.txHash === transactionHash && new BigNumber(item.amountRemaining).eq(0),
     );
 
     if (candidateToDonationList.length > 1) {
@@ -354,7 +355,7 @@ const handleToDonations = async ({
   }
 
   const toIndex = toNotFilledDonationList.findIndex(
-    item => item.txHash === transactionHash && item.amountRemaining.eq(0) && item.isReturn === isReturn,
+    item => item.txHash === transactionHash && new BigNumber(item.amountRemaining).eq(0) && item.isReturn === isReturn,
   );
 
   const toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
@@ -380,7 +381,7 @@ const handleToDonations = async ({
       pledgeId: to,
       pledgeState: toPledge.pledgeState,
       amount,
-      amountRemaining: new BigNumber(amount),
+      amountRemaining: amount,
       ownerId: toOwnerId,
       status,
       giverAddress,
@@ -527,13 +528,7 @@ const handleToDonations = async ({
       await setDonationUsdValue(donation);
       await donation.save();
       report.createdDonations++;
-
-      const _id = donation._id.toString();
-      expectedToDonation._id = _id;
-      expectedToDonation.savedAmountRemaining = model.amountRemaining;
-      expectedToDonation.savedStatus = expectedToDonation.status;
-      donationMap[_id] = {...expectedToDonation};
-      logger.info(
+      logger.error(
         `donation created: ${JSON.stringify(
           {
             ...expectedToDonation,
@@ -543,6 +538,12 @@ const handleToDonations = async ({
           2,
         )}`,
       );
+      const _id = donation._id.toString();
+      expectedToDonation._id = _id;
+      expectedToDonation.savedAmountRemaining = model.amountRemaining;
+      expectedToDonation.savedStatus = expectedToDonation.status;
+      donationMap[_id] = {...expectedToDonation};
+
     } else {
       logger.info(
         `this donation should be created: ${JSON.stringify(
