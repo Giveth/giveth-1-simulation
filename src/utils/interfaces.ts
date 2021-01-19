@@ -102,6 +102,8 @@ export interface ReportInterface {
   createdMilestones: number,
   createdDonations: number,
   updatedDonations: number,
+  updatedDonationsMined: number,
+  updatedDonationsParent: number,
   deletedDonations: number,
   createdPledgeAdmins: number,
   updatedMilestoneStatus: number,

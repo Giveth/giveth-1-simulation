@@ -99,3 +99,4 @@ data/
 .nyc_output
 
 src/**/*.js
+src/**/*.js.map

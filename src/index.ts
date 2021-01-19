@@ -46,6 +46,8 @@ const report = {
   createdMilestones: 0,
   createdDonations: 0,
   updatedDonations: 0,
+  updatedDonationsParent: 0,
+  updatedDonationsMined: 0,
   deletedDonations: 0,
   createdPledgeAdmins: 0,
   updatedMilestoneStatus: 0,
@@ -576,6 +578,7 @@ const handleToDonations = async ({
       logger.error(`Donation ${toDonation._id} mined flag should be true`);
       logger.debug('Updating...');
       await donationModel.updateOne({_id: toDonation._id}, {mined: true});
+      report.updatedDonationsMined ++;
       toDonation.mined = true;
     }
 
@@ -594,6 +597,7 @@ const handleToDonations = async ({
           {_id: toDonation._id},
           {parentDonations: usedFromDonations},
         );
+        report.updatedDonationsParent ++;
 
       }
     }
