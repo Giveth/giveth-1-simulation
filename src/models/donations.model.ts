@@ -15,7 +15,6 @@ export const DonationStatus = {
   CANCELED: 'Canceled',
   REJECTED: 'Rejected',
   FAILED: 'Failed',
-  RECOVERED: 'Recovered',
 };
 
 
