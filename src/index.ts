@@ -792,11 +792,7 @@ const main = async () => {
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {
-          await sendReportEmail(report,
-            givethDevMailList,
-            dappMailerUrl,
-            dappMailerSecret
-          )
+          await sendReportEmail(report)
         }
 
         terminateScript('All job done.', 0);

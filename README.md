@@ -48,6 +48,7 @@ with these data
   "updateNetworkCache": true,
   "emailReport": false,
   "emailSimulationError": false,
+  "givethMaintainersEmail":["mranjbar.z2993@gmail.com"],
   "givethDevMailList": [
     "mranjbar.z2993@gmail.com"
   ],

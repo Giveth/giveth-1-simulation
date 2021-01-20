@@ -1,13 +1,13 @@
 import axios from 'axios';
 import { ReportInterface } from '../utils/interfaces';
-const moment = require('moment')
+const moment = require('moment');
+const config = require('config');
+const dappMailerUrl = config.get('dappMailerUrl')
+const givethDevMailList = config.get('givethDevMailList')
+const givethMaintainersEmail = config.get('givethMaintainersEmail')
+const dappMailerSecret = config.get('dappMailerSecret')
 
-
-export const sendReportEmail = async (reportData: ReportInterface,
-                                      givethDevMailList:string[],
-                                      dappMailerUrl :string,
-                                      dappMailerSecret: string
-                                      ) => {
+export const sendReportEmail = async (reportData: ReportInterface) => {
   try {
     const tableStyle = 'width:100%; border: 1px solid black;  border-collapse: collapse;';
     const tableCellStyle = '  text-align: left;padding: 5px; border: 1px solid black;  border-collapse: collapse;';
@@ -16,11 +16,9 @@ export const sendReportEmail = async (reportData: ReportInterface,
     /**
      * You can see the dapp-mail code here @see{@link https://github.com/Giveth/dapp-mailer/blob/master/src/services/send/send.hooks.js}
      */
-    const data = {
+    const data : any = {
       template: 'notification',
       subject: `Simulation report ${moment().format('YYYY-MM-DD HH:m:s')} ${process.env.NODE_ENV}` ,
-      secretIntro: `This is required but I dont know what is this field`,
-      title: 'See the simulation result',
       image: 'Giveth-review-banner-email.png',
       text: `
               <table style='${tableStyle}'>
@@ -104,7 +102,28 @@ export const sendReportEmail = async (reportData: ReportInterface,
       unsubscribeReason: `You receive this email because you are in Giveth1-dev team`,
       // message: data.message,
     };
-    givethDevMailList.forEach(recipient => {
+    const resolvedConflicts = Boolean(
+      reportData.updatedDonationsMined ||
+      reportData.updatedDonationsParent ||
+      reportData.correctFailedDonations ||
+      reportData.createdCampaigns ||
+      reportData.createdDacs ||
+      reportData.createdDonations ||
+      reportData.createdMilestones ||
+      reportData.createdPledgeAdmins ||
+      reportData.updateAmountRemaining ||
+      reportData.updatedDonations ||
+      reportData.deletedDonations ||
+      reportData.updatedMilestoneStatus ||
+      reportData.removedPendingAmountRemainingCount
+    )
+    const summaryMessage = resolvedConflicts ?
+      'There were some conflicts that resolved' :
+      "The DB was clean and simulation didn't fix any conflict" ;
+    data.title = summaryMessage;
+    data.secretIntro = summaryMessage;
+    const emailList :string[]  = resolvedConflicts ? givethDevMailList : givethMaintainersEmail;
+    emailList.forEach(recipient => {
       promises.push(
         axios.post(`${dappMailerUrl}/send`,{
           ...data, recipient
