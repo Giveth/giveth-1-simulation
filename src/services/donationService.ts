@@ -46,7 +46,7 @@ export async function fetchDonationsInfo():
       _id: _id.toString(),
       amount: amount.toString(),
       savedAmountRemaining: amountRemaining.toString(),
-      amountRemaining: new BigNumber(0),
+      amountRemaining: '0',
       txHash,
       status,
       savedStatus: status,
@@ -81,10 +81,10 @@ export async function unsetPendingAmountRemainingFromCommittedDonations(options:
   const {report} = options;
   const query =  {status :{$ne: DonationStatus.PENDING},
     pendingAmountRemaining :{$exists :true}};
-  const committedDonationsWithPendingAmountRemaining =await donationModel.find(query);
-  report.removedPendingAmountRemainingCount = committedDonationsWithPendingAmountRemaining.length;
-  console.log('Removed pendingAmountFromDonations count', committedDonationsWithPendingAmountRemaining.length)
-  committedDonationsWithPendingAmountRemaining.forEach(donation =>{
+  const notPendingDonationsWithPendingAmountRemaining =await donationModel.find(query);
+  report.removedPendingAmountRemainingCount = notPendingDonationsWithPendingAmountRemaining.length;
+  console.log('Removed pendingAmountFromDonations count', notPendingDonationsWithPendingAmountRemaining.length)
+  notPendingDonationsWithPendingAmountRemaining.forEach(donation =>{
     logger.error('Remove pendingAmountFromDonations',{
       _id:donation._id,
       pendingAmountRemaining :donation.pendingAmountRemaining
@@ -127,6 +127,7 @@ export async function fixConflictInDonations(
           `Donation was unused!\n${JSON.stringify(
             {
               _id,
+              _idType:typeof _id,
               amount: amount.toString(),
               amountRemaining,
               status,
@@ -167,6 +168,7 @@ export async function fixConflictInDonations(
             const token = getTokenByAddress(tokenAddress);
             const tokenCutoff = token && getTokenCutoff(token.symbol);
             if(token && tokenCutoff && tokenCutoff.cutoff){
+              report.updateAmountRemaining ++ ;
               promises.push(
                 donationModel.updateOne(
                   {_id},
