@@ -77,6 +77,10 @@ export const sendReportEmail = async (reportData: ReportInterface,
                   <td style='${tableCellStyle}'>${reportData.updatedDonationsMined}</td>
                 </tr>
                 <tr>
+                  <td style='${tableCellStyle}'>updateAmountRemaining count</td>
+                  <td style='${tableCellStyle}'>${reportData.updateAmountRemaining}</td>
+                </tr>
+                <tr>
                   <td style='${tableCellStyle}'>correctFailedDonations count</td>
                   <td style='${tableCellStyle}'>${reportData.correctFailedDonations}</td>
                 </tr>

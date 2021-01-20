@@ -48,6 +48,7 @@ const report = {
   updatedDonations: 0,
   updatedDonationsParent: 0,
   updatedDonationsMined: 0,
+  updateAmountRemaining: 0,
   deletedDonations: 0,
   createdPledgeAdmins: 0,
   updatedMilestoneStatus: 0,
@@ -56,7 +57,7 @@ const report = {
   fetchedNewEventsCount: 0,
   fetchedNewPledgeAdminCount: 0,
   fetchedNewPledgeCount: 0,
-  removedPendingAmountRemainingCount:0
+  removedPendingAmountRemainingCount: 0
 };
 
 const cacheDir = config.get('cacheDir');
@@ -139,7 +140,7 @@ const convertPledgeStateToStatus = (pledge: PledgeInterface,
 
 const isRejectedDelegation = (data: { fromPledge: PledgeInterface, toPledge: PledgeInterface }) => {
   const {fromPledge, toPledge} = data;
-  return !!fromPledge &&
+  return Boolean(fromPledge) &&
     Number(fromPledge.intendedProject) > 0 &&
     fromPledge.intendedProject !== toPledge.owner;
 };
@@ -214,7 +215,7 @@ const handleFromDonations = async (from: string, to: string,
 
         if (fixConflicts) {
           logger.debug('Updating...');
-          report.updatedDonations ++;
+          report.updatedDonations++;
           await donationModel.updateOne(
             {_id: toFixDonation._id},
             {status: toFixDonation.status, pledgeId: to},
@@ -267,7 +268,7 @@ const handleFromDonations = async (from: string, to: string,
             giverAddress = item.giverAddress;
           }
 
-          const min = BigNumber.min(item.amountRemaining, fromAmount);
+          const min = BigNumber.min(new BigNumber(item.amountRemaining), fromAmount);
           item.amountRemaining = new BigNumber(item.amountRemaining).minus(min).toFixed();
           fromAmount = fromAmount.minus(min);
           if (new BigNumber(item.amountRemaining).isZero()) {
@@ -339,40 +340,25 @@ const handleToDonations = async ({
 
   const fromPledgeAdmin = await pledgeAdminModel.findOne({id: Number(fromOwnerId)});
 
-  let isReturn = isReverted;
-  if (!isReturn) {
-    const returnedTransfer = isReturnTransfer(
-      {
-        txHashTransferEventMap
-        , transferInfo:
-          {
-            fromPledge,
-            fromPledgeAdmin,
-            fromPledgeId: from,
-            toPledgeId: to,
-            txHash: transactionHash,
-          }
-      });
-    isReturn = isReturn || returnedTransfer;
-  }
+  const isReturn:boolean = Boolean(isReverted || isReturnTransfer(
+    {
+      txHashTransferEventMap
+      , transferInfo:
+        {
+          fromPledge,
+          fromPledgeAdmin,
+          fromPledgeId: from,
+          toPledgeId: to,
+          txHash: transactionHash,
+        }
+    }) || isRejectedDelegation({toPledge, fromPledge}));
+
 
   const toIndex = toNotFilledDonationList.findIndex(
-    item => item.txHash === transactionHash && new BigNumber(item.amountRemaining).eq(0) && item.isReturn === isReturn,
+    item => item.txHash === transactionHash && item.amountRemaining === '0' && item.isReturn === isReturn,
   );
 
   const toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
-
-  // It happens when a donation is cancelled, we choose the first one (created earlier)
-  // if (toDonationList.length > 1) {
-  //   console.log('toDonationList length is greater than 1');
-  //   process.exit();
-  // }
-
-  if (!isReturn) {
-    const rejectedDelegation = isRejectedDelegation({toPledge, fromPledge});
-    isReturn = isReturn || rejectedDelegation;
-  }
-
   if (toDonation === undefined) {
     // If parent is cancelled, this donation is not needed anymore
     const status = convertPledgeStateToStatus(toPledge, toOwnerAdmin);
@@ -388,7 +374,7 @@ const handleToDonations = async ({
       status,
       giverAddress,
       isReturn,
-      isRecovered :true
+      isRecovered: true
     };
     const homeTxHash = await getHomeTxHashForDonation({
       txHash: transactionHash,
@@ -426,7 +412,7 @@ const handleToDonations = async ({
           id: Number(toOwnerId),
           type: AdminTypes.GIVER,
           typeId: toOwnerAdmin.addr,
-          isRecovered:true
+          isRecovered: true
         });
         await toPledgeAdmin.save();
         report.createdPledgeAdmins++;
@@ -578,7 +564,7 @@ const handleToDonations = async ({
       logger.error(`Donation ${toDonation._id} mined flag should be true`);
       logger.debug('Updating...');
       await donationModel.updateOne({_id: toDonation._id}, {mined: true});
-      report.updatedDonationsMined ++;
+      report.updatedDonationsMined++;
       toDonation.mined = true;
     }
 
@@ -597,7 +583,7 @@ const handleToDonations = async ({
           {_id: toDonation._id},
           {parentDonations: usedFromDonations},
         );
-        report.updatedDonationsParent ++;
+        report.updatedDonationsParent++;
 
       }
     }
@@ -655,7 +641,6 @@ const syncEventWithDb = async (eventData: EventInterface) => {
     const {from, to, amount} = returnValues;
     logger.debug(`Transfer from ${from} to ${to} amount ${amount}`);
 
-    // eslint-disable-next-line no-await-in-loop
     const {usedFromDonations, giverAddress} = await handleFromDonations(
       from,
       to,
@@ -663,7 +648,6 @@ const syncEventWithDb = async (eventData: EventInterface) => {
       transactionHash,
     );
 
-    // eslint-disable-next-line no-await-in-loop
     await handleToDonations({
       from,
       to,
@@ -681,7 +665,7 @@ const syncEventWithDb = async (eventData: EventInterface) => {
     // eslint-disable-next-line no-await-in-loop
     await cancelProject({
       ownerPledgeAdminIdChargedDonationMap,
-      projectId:idProject,
+      projectId: idProject,
       admins
     });
   }

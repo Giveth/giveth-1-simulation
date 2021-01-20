@@ -104,6 +104,7 @@ export interface ReportInterface {
   updatedDonations: number,
   updatedDonationsMined: number,
   updatedDonationsParent: number,
+  updateAmountRemaining: number,
   deletedDonations: number,
   createdPledgeAdmins: number,
   updatedMilestoneStatus: number,
