@@ -61,8 +61,6 @@ const report = {
 };
 
 const cacheDir = config.get('cacheDir');
-const updateState = config.get('updateNetworkCache');
-const updateEvents = config.get('updateNetworkCache');
 const index = !config.get('dryRun');
 const fixConflicts = !config.get('dryRun');
 // const ignoredTransactions  = require('./eventProcessingHelper.json');
@@ -720,11 +718,10 @@ const main = async () => {
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
       report,
-      updateEvents,
-      updateState,
       cacheDir,
       foreignWeb3,
-      liquidPledging
+      liquidPledging,
+      kernel : await getKernel(),
 
     });
     events = blockChainData.events;
@@ -758,30 +755,30 @@ const main = async () => {
     db.once('open', async () => {
       logger.info('Connected to Mongo');
       try {
-        await syncDacs({
-          report,
-          homeWeb3,
-          foreignWeb3,
-          events,
-          liquidPledging,
-          fixConflicts,
-          AppProxyUpgradeable,
-          kernel: await getKernel()
-        });
-        await syncPledgeAdminsAndProjects({
-          report,
-          homeWeb3,
-          foreignWeb3,
-          events,
-          liquidPledging,
-          fixConflicts,
-          AppProxyUpgradeable,
-          kernel: await getKernel()
-        });
-        await syncDonationsWithNetwork();
-        await updateEntityDonationsCounter(AdminTypes.DAC);
-        await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
-        await updateEntityDonationsCounter(AdminTypes.MILESTONE);
+        // await syncDacs({
+        //   report,
+        //   homeWeb3,
+        //   foreignWeb3,
+        //   events,
+        //   liquidPledging,
+        //   fixConflicts,
+        //   AppProxyUpgradeable,
+        //   kernel: await getKernel()
+        // });
+        // await syncPledgeAdminsAndProjects({
+        //   report,
+        //   homeWeb3,
+        //   foreignWeb3,
+        //   events,
+        //   liquidPledging,
+        //   fixConflicts,
+        //   AppProxyUpgradeable,
+        //   kernel: await getKernel()
+        // });
+        // await syncDonationsWithNetwork();
+        // await updateEntityDonationsCounter(AdminTypes.DAC);
+        // await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
+        // await updateEntityDonationsCounter(AdminTypes.MILESTONE);
         await updateMilestonesFinalStatus(
           {
             report,

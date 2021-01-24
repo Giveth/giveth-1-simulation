@@ -45,7 +45,6 @@ with these data
   "cacheDir": "data/cache",
   "logLevel": "info",
   "dryRun": false,
-  "updateNetworkCache": true,
   "emailReport": false,
   "emailSimulationError": false,
   "givethMaintainersEmail":["mranjbar.z2993@gmail.com"],
