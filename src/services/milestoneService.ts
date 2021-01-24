@@ -25,16 +25,11 @@ const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongoos
     };
 
     const lastEvent = events.pop();
-    logger.error("getExpectedStatus",{
-        _id : milestone._id,
-        fullyFunded,
-        lastEvent,
-        hasReviewer,
-    })
     if (lastEvent.event === 'PaymentCollected') {
         if (
             (fullyFunded || hasReviewer) &&
-            donationCounters[0].currentBalance.toString() === '0'
+          donationCounters[0] &&
+          donationCounters[0].currentBalance.toString() === '0'
         ) {
             return MilestoneStatus.PAID;
         }
@@ -56,9 +51,7 @@ export const updateMilestonesFinalStatus = async (options :{
     for (const milestone of milestones) {
         progressBar.increment();
         const { status, projectId } = milestone;
-        const matchedEvents2 = events.filter(event => event.returnValues && String(event.returnValues.idProject) === String(projectId));
         const matchedEvents = events.filter(event => event.returnValues && String(event.returnValues.idProject) === String(projectId));
-
         if ([MilestoneStatus.ARCHIVED, MilestoneStatus.CANCELED].includes(status)) continue;
 
         let message = '';
@@ -66,16 +59,6 @@ export const updateMilestonesFinalStatus = async (options :{
         message += `Events: ${events.toString()}\n`;
         const expectedStatus = getExpectedStatus(matchedEvents, milestone);
         if (expectedStatus && status !== expectedStatus ){
-            // @ts-ignore
-            logger.error('updateMilestonesFinalStatus ',{
-                matchedEvents:matchedEvents.length,
-                matchedEvents2Length:matchedEvents2.length,
-                // matchedEvents3 : events.filter(event => event.returnValues && String(event.returnValues.idProject) === String(projectId)),
-
-                eventsLength :events.length,
-                projectId: milestone.projectId
-
-            })
             logger.error("should update milestone status",{
                  _id:milestone._id,
                 status,

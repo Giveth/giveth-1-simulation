@@ -755,30 +755,30 @@ const main = async () => {
     db.once('open', async () => {
       logger.info('Connected to Mongo');
       try {
-        // await syncDacs({
-        //   report,
-        //   homeWeb3,
-        //   foreignWeb3,
-        //   events,
-        //   liquidPledging,
-        //   fixConflicts,
-        //   AppProxyUpgradeable,
-        //   kernel: await getKernel()
-        // });
-        // await syncPledgeAdminsAndProjects({
-        //   report,
-        //   homeWeb3,
-        //   foreignWeb3,
-        //   events,
-        //   liquidPledging,
-        //   fixConflicts,
-        //   AppProxyUpgradeable,
-        //   kernel: await getKernel()
-        // });
-        // await syncDonationsWithNetwork();
-        // await updateEntityDonationsCounter(AdminTypes.DAC);
-        // await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
-        // await updateEntityDonationsCounter(AdminTypes.MILESTONE);
+        await syncDacs({
+          report,
+          homeWeb3,
+          foreignWeb3,
+          events,
+          liquidPledging,
+          fixConflicts,
+          AppProxyUpgradeable,
+          kernel: await getKernel()
+        });
+        await syncPledgeAdminsAndProjects({
+          report,
+          homeWeb3,
+          foreignWeb3,
+          events,
+          liquidPledging,
+          fixConflicts,
+          AppProxyUpgradeable,
+          kernel: await getKernel()
+        });
+        await syncDonationsWithNetwork();
+        await updateEntityDonationsCounter(AdminTypes.DAC);
+        await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
+        await updateEntityDonationsCounter(AdminTypes.MILESTONE);
         await updateMilestonesFinalStatus(
           {
             report,
