@@ -57,7 +57,9 @@ with these data
     "requiredConfirmations": 6,
     "nodeUrl": "wss://rinkeby.eth.aragon.network/ws",
     "homeNodeUrl": "wss://ropsten.infura.io/ws/v3/{SECRET GET THIS FROM infura.io}",
-    "liquidPledgingAddress": "0xf0e0F5A752f69Ee6dCfEed138520f6821357dc32"
+    "liquidPledgingAddress": "0xf0e0F5A752f69Ee6dCfEed138520f6821357dc32",
+     "vaultAddress": "0x2F3788a772D6eCCEbed68D760284e7f84Af3D492"
+
   },
   "tokenWhitelist": [
     {
