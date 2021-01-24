@@ -7,6 +7,9 @@ const logger = getLogger();
 
 
 const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongooseDocument) => {
+    const { maxAmount, donationCounters, fullyFunded, reviewerAddress } = milestone;
+    const hasReviewer = reviewerAddress && reviewerAddress !== ZERO_ADDRESS;
+
     const eventToStatus = {
         ApproveCompleted: MilestoneStatus.COMPLETED,
         CancelProject: MilestoneStatus.CANCELED,
@@ -23,12 +26,10 @@ const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongoos
 
     const lastEvent = events.pop();
     if (lastEvent.event === 'PaymentCollected') {
-        const { maxAmount, donationCounters, fullyFunded, reviewerAddress } = milestone;
-        const hasReviewer = reviewerAddress && reviewerAddress !== ZERO_ADDRESS;
         if (
-            maxAmount &&
             (fullyFunded || hasReviewer) &&
-            donationCounters[0].currentBalance.toString() === '0'
+          donationCounters[0] &&
+          donationCounters[0].currentBalance.toString() === '0'
         ) {
             return MilestoneStatus.PAID;
         }
@@ -49,8 +50,8 @@ export const updateMilestonesFinalStatus = async (options :{
     progressBar.start(milestones.length);
     for (const milestone of milestones) {
         progressBar.increment();
-        const matchedEvents = events.filter(event => event.returnValues && event.returnValues.idProject === String(milestone.projectId));
         const { status, projectId } = milestone;
+        const matchedEvents = events.filter(event => event.returnValues && String(event.returnValues.idProject) === String(projectId));
         if ([MilestoneStatus.ARCHIVED, MilestoneStatus.CANCELED].includes(status)) continue;
 
         let message = '';
