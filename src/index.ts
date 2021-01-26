@@ -51,7 +51,6 @@ const report = {
   updateAmountRemaining: 0,
   deletedDonations: 0,
   createdPledgeAdmins: 0,
-  updatedMilestoneStatus: 0,
   processedEvents: 0,
   correctFailedDonations: 0,
   fetchedNewEventsCount: 0,
@@ -782,12 +781,19 @@ const main = async () => {
         await updateEntityDonationsCounter(AdminTypes.DAC);
         await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
         await updateEntityDonationsCounter(AdminTypes.MILESTONE);
-        await updateMilestonesFinalStatus(
-          {
-            report,
-            events
-          }
-        );
+
+        /**
+         * The update status should not work because we shoul get some events like
+         * PaymentCollected from logs, and it's not working yet so wo we should not use it now
+         * we have some incomplete works about this in this feature
+         * @see{@link https://github.com/Giveth/giveth-1-simulation/tree/f_20_fetch_all_events}
+         */
+        // await updateMilestonesFinalStatus(
+        //   {
+        //     report,
+        //     events
+        //   }
+        // );
         await unsetPendingAmountRemainingFromCommittedDonations({report});
         console.table(report);
         console.log('end of simulation ', new Date())

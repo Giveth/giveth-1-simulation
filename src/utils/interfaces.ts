@@ -107,7 +107,6 @@ export interface ReportInterface {
   updateAmountRemaining: number,
   deletedDonations: number,
   createdPledgeAdmins: number,
-  updatedMilestoneStatus: number,
   processedEvents: number,
   correctFailedDonations: number,
   fetchedNewPledgeCount: number,

@@ -87,10 +87,6 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
                   <td style='${tableCellStyle}'>${reportData.createdPledgeAdmins}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>updatedMilestoneStatus count</td>
-                  <td style='${tableCellStyle}'>${reportData.updatedMilestoneStatus}</td>
-                </tr>
-                <tr>
                   <td style='${tableCellStyle}'>removedPendingAmountRemainingCount</td>
                   <td style='${tableCellStyle}'>${reportData.removedPendingAmountRemainingCount}</td>
                 </tr>
@@ -114,7 +110,6 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
       reportData.updateAmountRemaining ||
       reportData.updatedDonations ||
       reportData.deletedDonations ||
-      reportData.updatedMilestoneStatus ||
       reportData.removedPendingAmountRemainingCount
     )
     const summaryMessage = resolvedConflicts ?

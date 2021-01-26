@@ -64,7 +64,7 @@ export const updateMilestonesFinalStatus = async (options :{
                 expectedStatus
             })
             await milestoneModel.updateOne({ _id: milestone._id }, { status: expectedStatus, mined: true });
-            report.updatedMilestoneStatus ++;
+            // report.updatedMilestoneStatus ++;
         }
     }
     progressBar.update(milestones.length);
