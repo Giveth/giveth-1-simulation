@@ -173,6 +173,13 @@ export const fetchBlockchainData = async (options: {
           logger.debug(`state.admins: ${state.admins}`);
         }
       }
+      console.log('fromBlocks and toBlocks', {
+        eventsFromBlock,
+        projectEventsFromBlock,
+        milestoneEventsFromBlock,
+        lpVaultEventsFromBlock,
+        toBlock,
+      })
       const promises = [
         getPledgeBatch(liquidPledging, fromPledgeIndex),
         getAdminBatch(liquidPledging, fromPledgeAdminIndex),
@@ -248,11 +255,6 @@ export const fetchBlockchainData = async (options: {
     writeFileSync(milestoneEventsFile, JSON.stringify(milestoneEvents, null, 2));
 
     console.log('events and newEvents', {
-      eventsFromBlock,
-      projectEventsFromBlock,
-      milestoneEventsFromBlock,
-      lpVaultEventsFromBlock,
-      toBlock,
       eventsLength: events.length,
       newEventsLength: newEvents.length,
       milestoneEvents: milestoneEvents.length,
