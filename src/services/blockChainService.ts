@@ -175,10 +175,12 @@ export const fetchBlockchainData = async (options: {
       const promises = [
         getPledgeBatch(liquidPledging, fromPledgeIndex),
         getAdminBatch(liquidPledging, fromPledgeAdminIndex),
+
         liquidPledging.$contract.getPastEvents('allEvents', {
           fromBlock: eventsFromBlock,
           toBlock,
         }),
+        // Promise.resolve([]),
 
         kernel.$contract.getPastEvents({
           fromBlock : projectEventsFromBlock,
@@ -195,13 +197,13 @@ export const fetchBlockchainData = async (options: {
         }),
 
 
-        foreignWeb3.eth
-          .getPastLogs({
-              fromBlock: milestoneEventsFromBlock,
-              toBlock,
-              topics: getMilestoneTopics(liquidPledging),
-          }),
-        // Promise.resolve([]),
+        // foreignWeb3.eth
+        //   .getPastLogs({
+        //       fromBlock: milestoneEventsFromBlock,
+        //       toBlock,
+        //       topics: getMilestoneTopics(liquidPledging),
+        //   }),
+        Promise.resolve([]),
 
         lpVault.$contract.getPastEvents({
           fromBlock : lpVaultEventsFromBlock,
