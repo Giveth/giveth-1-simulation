@@ -778,6 +778,7 @@ const main = async () => {
         await syncDonationsWithNetwork();
         await updateEntityDonationsCounter(AdminTypes.DAC);
         await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
+        await unsetPendingAmountRemainingFromCommittedDonations({report});
         await updateEntityDonationsCounter(AdminTypes.MILESTONE);
         await updateMilestonesFinalStatus(
           {
@@ -785,7 +786,6 @@ const main = async () => {
             events
           }
         );
-        await unsetPendingAmountRemainingFromCommittedDonations({report});
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {

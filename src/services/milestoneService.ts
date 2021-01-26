@@ -58,7 +58,7 @@ export const updateMilestonesFinalStatus = async (options :{
         message += `Project ID: ${projectId}\n`;
         message += `Events: ${events.toString()}\n`;
         const expectedStatus = getExpectedStatus(matchedEvents, milestone);
-        if (expectedStatus && status !== expectedStatus ){
+        if (expectedStatus && status !== MilestoneStatus.RECOVERED && status !== expectedStatus ){
             logger.error("should update milestone status",{
                  _id:milestone._id,
                 status,
