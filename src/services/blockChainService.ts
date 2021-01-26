@@ -198,13 +198,13 @@ export const fetchBlockchainData = async (options: {
         }),
 
 
-        // foreignWeb3.eth
-        //   .getPastLogs({
-        //       fromBlock: milestoneEventsFromBlock,
-        //       toBlock,
-        //       topics: getMilestoneTopics(liquidPledging),
-        //   }),
-        Promise.resolve([]),
+        foreignWeb3.eth
+          .getPastLogs({
+              fromBlock: milestoneEventsFromBlock,
+              toBlock,
+              topics: getMilestoneTopics(liquidPledging),
+          }),
+        // Promise.resolve([]),
 
         lpVault.$contract.getPastEvents({
           fromBlock: lpVaultEventsFromBlock,
