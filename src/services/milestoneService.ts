@@ -25,6 +25,9 @@ const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongoos
     };
 
     const lastEvent = events.pop();
+    if (!lastEvent){
+        return null;
+    }
     if (lastEvent.event === 'PaymentCollected') {
         if (
             (fullyFunded || hasReviewer) &&
