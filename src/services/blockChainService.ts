@@ -51,7 +51,7 @@ const removeHexPrefix = hex => {
 };
 
 function getMilestoneTopics(liquidPledging) {
-  return [
+  const topics = [
     [
       // LPPCappedMilestone
       keccak256('MilestoneCompleteRequested(address,uint64)'),
@@ -74,10 +74,11 @@ function getMilestoneTopics(liquidPledging) {
     ],
     padLeft(`${(liquidPledging.$address).toLowerCase()}`, 64),
   ];
+  console.log('getMilestoneTopics ', topics)
+  return topics;
 }
 
 function decodeMilestone(web3, event) {
-  const liquidPledging = new LiquidPledging(web3, liquidPledgingAddress);
   const lppCappedMilestone = new LPPCappedMilestone(web3).$contract;
   const lpMilestone = new LPMilestone(web3).$contract;
   const bridgedMilestone = new BridgedMilestone(web3).$contract;
@@ -136,23 +137,23 @@ export const fetchBlockchainData = async (options: {
       state = JSON.parse(String(readFileSync(stateFile)));
     }
     let events: EventInterface[] = existsSync(eventsFile) ? JSON.parse(String(readFileSync(eventsFile))) : [];
-    let projectEvents : EventInterface[]= existsSync(projectEventsFile) ? JSON.parse(String(readFileSync(projectEventsFile))) : [];
+    let projectEvents: EventInterface[] = existsSync(projectEventsFile) ? JSON.parse(String(readFileSync(projectEventsFile))) : [];
     let milestoneEvents: EventInterface[] = existsSync(milestoneEventsFile) ? JSON.parse(String(readFileSync(milestoneEventsFile))) : [];
-    let lpVaultEvents : EventInterface[]= existsSync(lpVaultEventsFile) ? JSON.parse(String(readFileSync(lpVaultEventsFile))) : [];
+    let lpVaultEvents: EventInterface[] = existsSync(lpVaultEventsFile) ? JSON.parse(String(readFileSync(lpVaultEventsFile))) : [];
 
     const eventsFromBlock = events.length > 0 ? events[events.length - 1].blockNumber + 1 : 0;
-    const  projectEventsFromBlock = projectEvents.length > 0 ? projectEvents[projectEvents.length - 1].blockNumber + 1 : 0;
-    const  lpVaultEventsFromBlock = lpVaultEvents.length > 0 ? lpVaultEvents[lpVaultEvents.length - 1].blockNumber + 1 : 0;
-    const  milestoneEventsFromBlock = milestoneEvents.length > 0 ? milestoneEvents[milestoneEvents.length - 1].blockNumber + 1 : 0;
+    const projectEventsFromBlock = projectEvents.length > 0 ? projectEvents[projectEvents.length - 1].blockNumber + 1 : 0;
+    const lpVaultEventsFromBlock = lpVaultEvents.length > 0 ? lpVaultEvents[lpVaultEvents.length - 1].blockNumber + 1 : 0;
+    const milestoneEventsFromBlock = milestoneEvents.length > 0 ? milestoneEvents[milestoneEvents.length - 1].blockNumber + 1 : 0;
     const toBlock =
       (await foreignWeb3.eth.getBlockNumber()) - config.get('blockchain.requiredConfirmations');
     const fromPledgeIndex = state.pledges.length > 1 ? state.pledges.length : 1;
     const fromPledgeAdminIndex = state.admins.length > 1 ? state.admins.length : 1;
 
     let newEvents: EventInterface[] = [];
-    let newProjectEvents : EventInterface[]= [];
-    let newMilestoneEvents : EventInterface[]= [];
-    let newLpVaultEvents : EventInterface[]= [];
+    let newProjectEvents: EventInterface[] = [];
+    let newMilestoneEvents: EventInterface[] = [];
+    let newLpVaultEvents: EventInterface[] = [];
     let newPledges = [];
     let newAdmins = [];
     let dataFetched = false;
@@ -183,7 +184,7 @@ export const fetchBlockchainData = async (options: {
         // Promise.resolve([]),
 
         kernel.$contract.getPastEvents({
-          fromBlock : projectEventsFromBlock,
+          fromBlock: projectEventsFromBlock,
           toBlock,
           filter: {
             namespace: keccak256('base'),
@@ -206,8 +207,9 @@ export const fetchBlockchainData = async (options: {
         Promise.resolve([]),
 
         lpVault.$contract.getPastEvents({
-          fromBlock : lpVaultEventsFromBlock,
-          toBlock})
+          fromBlock: lpVaultEventsFromBlock,
+          toBlock
+        })
       ]
       let [error, result] = await toFn(
         Promise.all(promises),
@@ -236,16 +238,14 @@ export const fetchBlockchainData = async (options: {
     state.admins = [...state.admins, ...newAdmins];
     writeFileSync(stateFile, JSON.stringify(state, null, 2));
 
-    if (newEvents) {
-      events = [...events, ...newEvents];
-      milestoneEvents = [...milestoneEvents, ...newMilestoneEvents];
-      projectEvents = [...projectEvents, ...newProjectEvents];
-      lpVaultEvents = [...lpVaultEvents, ...newLpVaultEvents];
-      writeFileSync(eventsFile, JSON.stringify(events, null, 2));
-      writeFileSync(lpVaultEventsFile, JSON.stringify(lpVaultEvents, null, 2));
-      writeFileSync(projectEventsFile, JSON.stringify(projectEvents, null, 2));
-      writeFileSync(milestoneEventsFile, JSON.stringify(milestoneEvents, null, 2));
-    }
+    events = [...events, ...newEvents];
+    milestoneEvents = [...milestoneEvents, ...newMilestoneEvents];
+    projectEvents = [...projectEvents, ...newProjectEvents];
+    lpVaultEvents = [...lpVaultEvents, ...newLpVaultEvents];
+    writeFileSync(eventsFile, JSON.stringify(events, null, 2));
+    writeFileSync(lpVaultEventsFile, JSON.stringify(lpVaultEvents, null, 2));
+    writeFileSync(projectEventsFile, JSON.stringify(projectEvents, null, 2));
+    writeFileSync(milestoneEventsFile, JSON.stringify(milestoneEvents, null, 2));
 
     console.log('events and newEvents', {
       eventsFromBlock,
@@ -254,6 +254,7 @@ export const fetchBlockchainData = async (options: {
       lpVaultEventsFromBlock,
       toBlock,
       eventsLength: events.length,
+      newEventsLength: newEvents.length,
       milestoneEvents: milestoneEvents.length,
       projectEvents: projectEvents.length,
       lpVaultEvents: lpVaultEvents.length,
