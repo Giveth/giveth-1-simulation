@@ -168,7 +168,6 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
 
 export const syncPledgeAdminsAndProjects = async (
   options: {
-    fixConflicts: boolean,
     events: EventInterface[],
     report: ReportInterface,
     homeWeb3: any,
@@ -179,13 +178,12 @@ export const syncPledgeAdminsAndProjects = async (
   }
 ) => {
   const {
-    fixConflicts, homeWeb3, foreignWeb3,
+    homeWeb3, foreignWeb3,
     liquidPledging, kernel,
     events, AppProxyUpgradeable,
     report
   } = options;
-  console.log('syncPledgeAdminsAndProjects called', {fixConflicts});
-  if (!fixConflicts) return;
+  console.log('syncPledgeAdminsAndProjects called');
   const startTime = new Date();
   console.log('Syncing PledgeAdmins with events .... ');
   const progressBar = createProgressBar({title: 'Syncing pladgeAdmins with events'});

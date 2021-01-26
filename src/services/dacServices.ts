@@ -8,7 +8,6 @@ import {getLogger} from "../utils/logger";
 
 const logger = getLogger();
 export const syncDacs = async (options:{
-    fixConflicts:boolean,
     events: EventInterface[],
     report: ReportInterface,
     homeWeb3:any,
@@ -17,12 +16,11 @@ export const syncDacs = async (options:{
     kernel:any,
     AppProxyUpgradeable:any
 }) => {
-    const {fixConflicts, homeWeb3, foreignWeb3,
+    const {homeWeb3, foreignWeb3,
         liquidPledging, kernel,
         events, AppProxyUpgradeable,
     report} = options;
-    console.log('syncDacs called', { fixConflicts });
-    if (!fixConflicts) return;
+    console.log('syncDacs called ...',);
     const startTime = new Date();
     const progressBar = createProgressBar({ title: 'Syncing Dacs with events' });
     progressBar.start(events.length, 0);

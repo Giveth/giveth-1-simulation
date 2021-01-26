@@ -61,8 +61,6 @@ const report = {
 };
 
 const cacheDir = config.get('cacheDir');
-const index = !config.get('dryRun');
-const fixConflicts = !config.get('dryRun');
 // const ignoredTransactions  = require('./eventProcessingHelper.json');
 const ignoredTransactions = [];
 
@@ -211,16 +209,15 @@ const handleFromDonations = async (from: string, to: string,
         logger.debug('Will update to:');
         logger.debug(JSON.stringify(toFixDonation, null, 2));
 
-        if (fixConflicts) {
-          logger.debug('Updating...');
-          report.updatedDonations++;
-          await donationModel.updateOne(
-            {_id: toFixDonation._id},
-            {status: toFixDonation.status, pledgeId: to},
-          );
-          report.correctFailedDonations++;
-        }
+        logger.debug('Updating...');
+        report.updatedDonations++;
+        await donationModel.updateOne(
+          {_id: toFixDonation._id},
+          {status: toFixDonation.status, pledgeId: to},
+        );
+        report.correctFailedDonations++;
       }
+
     }
 
     // Reduce money from parents one by one
@@ -338,7 +335,7 @@ const handleToDonations = async ({
 
   const fromPledgeAdmin = await pledgeAdminModel.findOne({id: Number(fromOwnerId)});
 
-  const isReturn:boolean = Boolean(isReverted || isReturnTransfer(
+  const isReturn: boolean = Boolean(isReverted || isReturnTransfer(
     {
       txHashTransferEventMap
       , transferInfo:
@@ -384,170 +381,151 @@ const handleToDonations = async ({
       expectedToDonation.homeTxHash = homeTxHash;
     }
 
-    if (fixConflicts) {
-      let toPledgeAdmin: PledgeAdminMongooseDocument = await pledgeAdminModel.findOne({id: Number(toOwnerId)});
-      if (!toPledgeAdmin) {
-        if (toOwnerAdmin.type !== 'Giver') {
-          terminateScript(
-            `No PledgeAdmin record exists for non user admin ${JSON.stringify(
-              toOwnerAdmin,
-              null,
-              2,
-            )}`,
-          );
-          logger.error(
-            `No PledgeAdmin record exists for non user admin ${JSON.stringify(
-              toOwnerAdmin,
-              null,
-              2,
-            )}`,
-          );
-          return;
-        }
-
-        // Create user pledge admin
-        toPledgeAdmin = new pledgeAdminModel({
-          id: Number(toOwnerId),
-          type: AdminTypes.GIVER,
-          typeId: toOwnerAdmin.addr,
-          isRecovered: true
-        });
-        await toPledgeAdmin.save();
-        report.createdPledgeAdmins++;
-        logger.info(`pledgeAdmin crated: ${toPledgeAdmin._id.toString()}`);
-      }
-
-      if (!toPledgeAdmin.typeId) {
-        console.log("pledgeAdminId is undefined", {toPledgeAdmin, expectedToDonation})
-      }
-
-      expectedToDonation = {
-        ...expectedToDonation,
-        ownerId: toPledgeAdmin.id,
-        ownerTypeId: toPledgeAdmin.typeId,
-        ownerType: toPledgeAdmin.type,
-      };
-
-      // Create donation
-      const token = config.get('tokenWhitelist').find(
-        t => t.foreignAddress.toLowerCase() === toPledge.token.toLowerCase(),
-      );
-      if (token === undefined) {
-        logger.error(`No token found for address ${toPledge.token}`);
-        terminateScript(`No token found for address ${toPledge.token}`);
-        return;
-      }
-      expectedToDonation.tokenAddress = token.address;
-      const delegationInfo: DelegateInfoInterface = <DelegateInfoInterface>{};
-      // It's delegated to a DAC
-      if (toPledge.delegates.length > 0) {
-        const [delegate] = toPledge.delegates;
-        const dacPledgeAdmin = await pledgeAdminModel.findOne({id: Number(delegate.id)});
-        if (!dacPledgeAdmin) {
-          // This is wrong, why should we terminate if there is no dacPledgeAdmin
-          logger.error(`No dac found for id: ${delegate.id}`);
-          terminateScript(`No dac found for id: ${delegate.id}`);
-          return;
-        }
-        delegationInfo.delegateId = dacPledgeAdmin.id;
-        delegationInfo.delegateTypeId = dacPledgeAdmin.typeId;
-        delegationInfo.delegateType = dacPledgeAdmin.type;
-
-        // Has intended project
-        const {intendedProject} = toPledge;
-        if (intendedProject !== '0') {
-          const intendedProjectPledgeAdmin = await pledgeAdminModel.findOne({
-            id: Number(intendedProject),
-          });
-          if (!intendedProjectPledgeAdmin) {
-            terminateScript(`No project found for id: ${intendedProject}`);
-            return;
-          }
-          delegationInfo.intendedProjectId = intendedProjectPledgeAdmin.id;
-          delegationInfo.intendedProjectTypeId = intendedProjectPledgeAdmin.typeId;
-          delegationInfo.intendedProjectType = intendedProjectPledgeAdmin.type;
-        }
-      }
-      expectedToDonation = {
-        ...expectedToDonation,
-        ...delegationInfo,
-      };
-
-      // Set giverAddress to owner address if is a Giver
-      if (giverAddress === undefined) {
-        if (toOwnerAdmin.type !== 'Giver') {
-          logger.error('Cannot set giverAddress');
-          terminateScript(`Cannot set giverAddress`);
-          return;
-        }
-        giverAddress = toPledgeAdmin.typeId;
-        expectedToDonation.giverAddress = giverAddress;
-      }
-
-      if (status === null) {
-        logger.error(`Pledge status ${toPledge.pledgeState} is unknown`);
-        terminateScript(`Pledge status ${toPledge.pledgeState} is unknown`);
+    let toPledgeAdmin: PledgeAdminMongooseDocument = await pledgeAdminModel.findOne({id: Number(toOwnerId)});
+    if (!toPledgeAdmin) {
+      if (toOwnerAdmin.type !== 'Giver') {
+        terminateScript(
+          `No PledgeAdmin record exists for non user admin ${JSON.stringify(
+            toOwnerAdmin,
+            null,
+            2,
+          )}`,
+        );
+        logger.error(
+          `No PledgeAdmin record exists for non user admin ${JSON.stringify(
+            toOwnerAdmin,
+            null,
+            2,
+          )}`,
+        );
         return;
       }
 
-      const {timestamp} = await foreignWeb3.eth.getBlock(blockNumber);
-      const actionTakerAddress = await getActionTakerAddress({
-        txHash: transactionHash,
-        homeWeb3,
-        foreignWeb3,
-        homeTxHash
+      // Create user pledge admin
+      toPledgeAdmin = new pledgeAdminModel({
+        id: Number(toOwnerId),
+        type: AdminTypes.GIVER,
+        typeId: toOwnerAdmin.addr,
+        isRecovered: true
       });
-      const model: any = {
-        ...expectedToDonation,
-        tokenAddress: token.address,
-        actionTakerAddress,
-        amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
-        mined: true,
-        createdAt: new Date(timestamp * 1000),
-      };
-
-      const {cutoff} = getTokenCutoff(token.symbol);
-      model.lessThanCutoff = cutoff.gt(new BigNumber(model.amountRemaining));
-
-      const donation = new donationModel(model);
-
-      await setDonationUsdValue(donation);
-      await donation.save();
-      report.createdDonations++;
-      logger.error(
-        `donation created: ${JSON.stringify(
-          {
-            ...expectedToDonation,
-            amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
-          },
-          null,
-          2,
-        )}`,
-      );
-      const _id = donation._id.toString();
-      expectedToDonation._id = _id;
-      expectedToDonation.savedAmountRemaining = model.amountRemaining;
-      expectedToDonation.savedStatus = expectedToDonation.status;
-      donationMap[_id] = {...expectedToDonation};
-
-    } else {
-      logger.info(
-        `this donation should be created: ${JSON.stringify(
-          {
-            ...expectedToDonation,
-            amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
-          },
-          null,
-          2,
-        )}`,
-      );
-      logger.debug('--------------------------------');
-      logger.debug(`From owner: ${fromOwnerAdmin}`);
-      logger.debug(`To owner:${toOwnerAdmin}`);
-      logger.debug('--------------------------------');
-      logger.debug(`From pledge: ${fromPledge}`);
-      logger.debug(`To pledge: ${toPledge}`);
+      await toPledgeAdmin.save();
+      report.createdPledgeAdmins++;
+      logger.info(`pledgeAdmin crated: ${toPledgeAdmin._id.toString()}`);
     }
+
+    if (!toPledgeAdmin.typeId) {
+      console.log("pledgeAdminId is undefined", {toPledgeAdmin, expectedToDonation})
+    }
+
+    expectedToDonation = {
+      ...expectedToDonation,
+      ownerId: toPledgeAdmin.id,
+      ownerTypeId: toPledgeAdmin.typeId,
+      ownerType: toPledgeAdmin.type,
+    };
+
+    // Create donation
+    const token = config.get('tokenWhitelist').find(
+      t => t.foreignAddress.toLowerCase() === toPledge.token.toLowerCase(),
+    );
+    if (token === undefined) {
+      logger.error(`No token found for address ${toPledge.token}`);
+      terminateScript(`No token found for address ${toPledge.token}`);
+      return;
+    }
+    expectedToDonation.tokenAddress = token.address;
+    const delegationInfo: DelegateInfoInterface = <DelegateInfoInterface>{};
+    // It's delegated to a DAC
+    if (toPledge.delegates.length > 0) {
+      const [delegate] = toPledge.delegates;
+      const dacPledgeAdmin = await pledgeAdminModel.findOne({id: Number(delegate.id)});
+      if (!dacPledgeAdmin) {
+        // This is wrong, why should we terminate if there is no dacPledgeAdmin
+        logger.error(`No dac found for id: ${delegate.id}`);
+        terminateScript(`No dac found for id: ${delegate.id}`);
+        return;
+      }
+      delegationInfo.delegateId = dacPledgeAdmin.id;
+      delegationInfo.delegateTypeId = dacPledgeAdmin.typeId;
+      delegationInfo.delegateType = dacPledgeAdmin.type;
+
+      // Has intended project
+      const {intendedProject} = toPledge;
+      if (intendedProject !== '0') {
+        const intendedProjectPledgeAdmin = await pledgeAdminModel.findOne({
+          id: Number(intendedProject),
+        });
+        if (!intendedProjectPledgeAdmin) {
+          terminateScript(`No project found for id: ${intendedProject}`);
+          return;
+        }
+        delegationInfo.intendedProjectId = intendedProjectPledgeAdmin.id;
+        delegationInfo.intendedProjectTypeId = intendedProjectPledgeAdmin.typeId;
+        delegationInfo.intendedProjectType = intendedProjectPledgeAdmin.type;
+      }
+    }
+    expectedToDonation = {
+      ...expectedToDonation,
+      ...delegationInfo,
+    };
+
+    // Set giverAddress to owner address if is a Giver
+    if (giverAddress === undefined) {
+      if (toOwnerAdmin.type !== 'Giver') {
+        logger.error('Cannot set giverAddress');
+        terminateScript(`Cannot set giverAddress`);
+        return;
+      }
+      giverAddress = toPledgeAdmin.typeId;
+      expectedToDonation.giverAddress = giverAddress;
+    }
+
+    if (status === null) {
+      logger.error(`Pledge status ${toPledge.pledgeState} is unknown`);
+      terminateScript(`Pledge status ${toPledge.pledgeState} is unknown`);
+      return;
+    }
+
+    const {timestamp} = await foreignWeb3.eth.getBlock(blockNumber);
+    const actionTakerAddress = await getActionTakerAddress({
+      txHash: transactionHash,
+      homeWeb3,
+      foreignWeb3,
+      homeTxHash
+    });
+    const model: any = {
+      ...expectedToDonation,
+      tokenAddress: token.address,
+      actionTakerAddress,
+      amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
+      mined: true,
+      createdAt: new Date(timestamp * 1000),
+    };
+
+    const {cutoff} = getTokenCutoff(token.symbol);
+    model.lessThanCutoff = cutoff.gt(new BigNumber(model.amountRemaining));
+
+    const donation = new donationModel(model);
+
+    await setDonationUsdValue(donation);
+    await donation.save();
+    report.createdDonations++;
+    logger.error(
+      `donation created: ${JSON.stringify(
+        {
+          ...expectedToDonation,
+          amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
+        },
+        null,
+        2,
+      )}`,
+    );
+    const _id = donation._id.toString();
+    expectedToDonation._id = _id;
+    expectedToDonation.savedAmountRemaining = model.amountRemaining;
+    expectedToDonation.savedStatus = expectedToDonation.status;
+    donationMap[_id] = {...expectedToDonation};
+
     addChargedDonation(expectedToDonation);
   } else {
     // Check toDonation has correct status and mined flag
@@ -574,16 +552,13 @@ const handleToDonations = async ({
       usedFromDonations.some(id => !parentDonations.includes(id))
     ) {
       logger.error(`Parent of ${toDonation._id} should be updated to ${usedFromDonations}`);
-      if (fixConflicts) {
-        logger.debug('Updating...');
-        toDonation.parentDonations = usedFromDonations;
-        await donationModel.updateOne(
-          {_id: toDonation._id},
-          {parentDonations: usedFromDonations},
-        );
-        report.updatedDonationsParent++;
-
-      }
+      logger.debug('Updating...');
+      toDonation.parentDonations = usedFromDonations;
+      await donationModel.updateOne(
+        {_id: toDonation._id},
+        {parentDonations: usedFromDonations},
+      );
+      report.updatedDonationsParent++;
     }
 
     if (toDonation.isReturn !== isReturn) {
@@ -702,7 +677,6 @@ const syncDonationsWithNetwork = async () => {
   );
   await fixConflictInDonations({
     donationMap,
-    fixConflicts,
     pledges,
     report,
     unusedDonationMap
@@ -712,8 +686,11 @@ const syncDonationsWithNetwork = async () => {
 
 const main = async () => {
   try {
+    console.log("step1");
     homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
+    console.log("step2");
     const instantiateForeignWeb3 = await instantiateWeb3(nodeUrl);
+    console.log("step3");
     foreignWeb3 = instantiateForeignWeb3.web3;
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
@@ -721,9 +698,11 @@ const main = async () => {
       cacheDir,
       foreignWeb3,
       liquidPledging,
-      kernel : await getKernel(),
+      kernel: await getKernel(),
 
     });
+    console.log("step4");
+
     events = blockChainData.events;
     admins = blockChainData.admins;
     pledges = blockChainData.pledges;
@@ -737,11 +716,6 @@ const main = async () => {
         list.push(e);
       }
     });
-
-    if (!index && !fixConflicts) {
-      terminateScript(null, 0);
-      return;
-    }
 
     /*
        Find conflicts in milestone donation counter
@@ -761,7 +735,6 @@ const main = async () => {
           foreignWeb3,
           events,
           liquidPledging,
-          fixConflicts,
           AppProxyUpgradeable,
           kernel: await getKernel()
         });
@@ -771,7 +744,6 @@ const main = async () => {
           foreignWeb3,
           events,
           liquidPledging,
-          fixConflicts,
           AppProxyUpgradeable,
           kernel: await getKernel()
         });
