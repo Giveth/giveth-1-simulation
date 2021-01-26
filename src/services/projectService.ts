@@ -66,7 +66,6 @@ export const updateEntityDonationsCounter = async (type: string) => {
   });
   progressBar.start(entities.length);
   for (const entity of entities) {
-    console.log("")
     progressBar.increment();
     const oldDonationCounters = entity.donationCounters;
     const query = {...donationQuery};
