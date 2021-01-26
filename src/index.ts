@@ -60,8 +60,6 @@ const report = {
 };
 
 const cacheDir = config.get('cacheDir');
-const updateState = config.get('updateNetworkCache');
-const updateEvents = config.get('updateNetworkCache');
 const index = !config.get('dryRun');
 const fixConflicts = !config.get('dryRun');
 // const ignoredTransactions  = require('./eventProcessingHelper.json');
@@ -719,11 +717,10 @@ const main = async () => {
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
       report,
-      updateEvents,
-      updateState,
       cacheDir,
       foreignWeb3,
-      liquidPledging
+      liquidPledging,
+      kernel : await getKernel(),
 
     });
     events = blockChainData.events;
