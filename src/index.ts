@@ -51,6 +51,7 @@ const report = {
   updateAmountRemaining: 0,
   deletedDonations: 0,
   createdPledgeAdmins: 0,
+  updatedMilestoneStatus: 0,
   processedEvents: 0,
   correctFailedDonations: 0,
   fetchedNewEventsCount: 0,
@@ -60,6 +61,8 @@ const report = {
 };
 
 const cacheDir = config.get('cacheDir');
+const updateState = config.get('updateNetworkCache');
+const updateEvents = config.get('updateNetworkCache');
 const index = !config.get('dryRun');
 const fixConflicts = !config.get('dryRun');
 // const ignoredTransactions  = require('./eventProcessingHelper.json');
@@ -717,10 +720,11 @@ const main = async () => {
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
       report,
+      updateEvents,
+      updateState,
       cacheDir,
       foreignWeb3,
-      liquidPledging,
-      kernel : await getKernel(),
+      liquidPledging
 
     });
     events = blockChainData.events;
