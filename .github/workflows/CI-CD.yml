@@ -1,0 +1,46 @@
+name:  CI/CD
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - name: install dependencies
+        run: npm install
+      - name: run linter
+        run: npm run lint
+      - name: build
+        run: npm run build
+      - name: test
+        run: npm run test
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: print branch name
+        run: echo ${GITHUB_REF##*/}
+      - name: develop deploy
+        if: ${GITHUB_REF##*/} == 'f_11_add_github_action'
+        uses: garygrossgarten/github-action-ssh@v0.6.4
+        with:
+          command: cd giveth-1-simulation && git checkout develop && git pull origin develop && [[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh && nvm use 10  && npm ci && npm run build
+          host: ${{ secrets.DEVELOP_HOST }}
+          username: ${{ secrets.DEVELOP_USERNAME }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
+          privateKey: ${{ secrets.DEVELOP_PRIVATE_KEY}}
+
+      - name: beta deploy
+        if: ${GITHUB_REF##*/} == 'main'
+        uses: garygrossgarten/github-action-ssh@v0.6.4
+        with:
+          command: echo "It's not implemented"
+          host: ${{ secrets.BETA_HOST }}
+          username: ${{ secrets.BETA_USERNAME }}
+#          passphrase: ${{ secrets.PASSPHRASE }}
+          privateKey: ${{ secrets.BETA_PRIVATE_KEY}}
