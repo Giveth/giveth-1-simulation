@@ -1,3 +1,5 @@
+![CI/CD](https://github.com/Giveth/giveth-1-simulation/workflows/CI/CD/badge.svg)
+
 Note: Please use `develop` branch for contributing.
 
 This project runs to fix conflicts between the [Giveth-Feathers](https://github.com/Giveth/feathers-giveth) DB and network ( smart contracts)
