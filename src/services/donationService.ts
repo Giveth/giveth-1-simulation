@@ -178,6 +178,7 @@ export async function fixConflictInDonations(
                       lessThanCutoff: tokenCutoff.cutoff.gt(amountRemaining),
                     },
                   },
+                  {timestamps: false}
                 ),
               );
             }
@@ -202,7 +203,11 @@ export async function fixConflictInDonations(
           );
           if (fixConflicts) {
             logger.debug('Updating...');
-            promises.push(donationModel.updateOne({_id}, {status}));
+            promises.push(donationModel.updateOne(
+              {_id},
+              {status},
+              {timestamps: false}
+              ));
           }
         }
       }
