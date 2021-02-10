@@ -219,6 +219,7 @@ const handleFromDonations = async (from: string, to: string,
           await donationModel.updateOne(
             {_id: toFixDonation._id},
             {status: toFixDonation.status, pledgeId: to},
+            {timestamps: false}
           );
           report.correctFailedDonations++;
         }
@@ -340,7 +341,7 @@ const handleToDonations = async ({
 
   const fromPledgeAdmin = await pledgeAdminModel.findOne({id: Number(fromOwnerId)});
 
-  const isReturn:boolean = Boolean(isReverted || isReturnTransfer(
+  const isReturn: boolean = Boolean(isReverted || isReturnTransfer(
     {
       txHashTransferEventMap
       , transferInfo:
@@ -563,7 +564,9 @@ const handleToDonations = async ({
     if (toDonation.mined === false) {
       logger.error(`Donation ${toDonation._id} mined flag should be true`);
       logger.debug('Updating...');
-      await donationModel.updateOne({_id: toDonation._id}, {mined: true});
+      await donationModel.updateOne({_id: toDonation._id},
+        {mined: true},
+        {timestamps: false});
       report.updatedDonationsMined++;
       toDonation.mined = true;
     }
@@ -582,6 +585,7 @@ const handleToDonations = async ({
         await donationModel.updateOne(
           {_id: toDonation._id},
           {parentDonations: usedFromDonations},
+          {timestamps: false}
         );
         report.updatedDonationsParent++;
 
@@ -591,7 +595,10 @@ const handleToDonations = async ({
     if (toDonation.isReturn !== isReturn) {
       logger.error(`Donation ${toDonation._id} isReturn flag should be ${isReturn}`);
       logger.debug('Updating...');
-      await donationModel.updateOne({_id: toDonation._id}, {isReturn});
+      await donationModel.updateOne(
+        {_id: toDonation._id},
+        {isReturn},
+        {timestamps: false});
       toDonation.isReturn = isReturn;
     }
 
@@ -602,7 +609,10 @@ const handleToDonations = async ({
         `Donation ${toDonation._id} usdValue is ${usdValue} but should be updated to ${toDonation.usdValue}`,
       );
       logger.debug('Updating...');
-      await donationModel.updateOne({_id: toDonation._id}, {usdValue: toDonation.usdValue});
+      await donationModel.updateOne(
+        {_id: toDonation._id},
+        {usdValue: toDonation.usdValue},
+        {timestamps: false});
 
     }
 
