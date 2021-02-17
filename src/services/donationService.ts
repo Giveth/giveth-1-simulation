@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import {DonationObjectInterface, ExtendedDonation, PledgeInterface, ReportInterface} from "../utils/interfaces";
 import {getTokenByAddress, getTokenCutoff} from "../utils/tokenUtility";
 import {getLogger} from "../utils/logger";
+import {conversationModel} from "../models/conversations.model";
 
 const logger = getLogger();
 
@@ -127,7 +128,6 @@ export async function fixConflictInDonations(
           `Donation was unused!\n${JSON.stringify(
             {
               _id,
-              _idType:typeof _id,
               amount: amount.toString(),
               amountRemaining,
               status,
@@ -140,9 +140,12 @@ export async function fixConflictInDonations(
           )}`,
         );
         if (fixConflicts) {
-          logger.debug('Deleting...');
+          logger.info('Deleting conversation and relevant conversation if exists ...', {_id});
           report.deletedDonations ++;
           promises.push(donationModel.findOneAndDelete({_id}));
+          promises.push(conversationModel.findOneAndDelete({
+            donationId:_id,
+          }));
 
         }
       } else {
