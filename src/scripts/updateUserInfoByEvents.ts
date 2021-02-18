@@ -50,6 +50,9 @@ const updateUserInfo = async (data: {
       'returnValues.idGiver': data.user.giverId
     }).sort({createdAt: -1});
   }
+  if (!event){
+    return;
+  }
   const transaction = await data.web3.eth.getTransaction(event.transactionHash)
   if(!transaction){
     return
