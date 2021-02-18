@@ -737,12 +737,13 @@ const main = async () => {
     console.log("transaction found, inputData by hexToAscii:", inputData)
     const inputDataToAscii = toAscii(transaction.input)
     console.log("transaction found, inputData by inputDataToAscii:", inputDataToAscii)
-    const inputDataToUtf8 = toUtf8(transaction.input)
-    console.log("transaction found, inputData by inputDataToUtf8:", inputDataToUtf8)
     const inputDataHextToUtf8 = hexToUtf8(transaction.input)
     console.log("transaction found, inputData by inputDataHextToUtf8:", inputDataHextToUtf8)
     const inputDataHexToString= hexToString(transaction.input)
     console.log("transaction found, inputData by inputDataHexToString:", inputDataHexToString)
+
+    const inputDataToUtf8 = toUtf8(transaction.input)
+    console.log("transaction found, inputData by inputDataToUtf8:", inputDataToUtf8)
     if (true){
       console.log('end of simulation temporary')
       return;
