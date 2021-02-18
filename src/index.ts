@@ -23,6 +23,8 @@ import {syncDacs} from './services/dacServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
+const {toAscii} = require('web3');
+
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {
   fetchDonationsInfo,
@@ -726,11 +728,12 @@ const main = async () => {
   try {
     console.log("Connecting to networks")
 
-    homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
+    // homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
     const instantiateForeignWeb3 = await instantiateWeb3(nodeUrl);
     foreignWeb3 = instantiateForeignWeb3.web3;
-    const transaction = await foreignWeb3.eth.getTransaction('0xad176de7ea2d299efa90ecd72e3772448e2700cfcfdfda9430468124a0e3e798');
-    console.log("transaction found", transaction)
+      const transaction = await foreignWeb3.eth.getTransaction('0xad176de7ea2d299efa90ecd72e3772448e2700cfcfdfda9430468124a0e3e798');
+    const inputData = toAscii(transaction.input)
+    console.log("transaction found", {transaction, inputData})
     if (true){
       console.log('end of simulation temporary')
       return;
