@@ -23,7 +23,6 @@ import {syncDacs} from './services/dacServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
 import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
-
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {
   fetchDonationsInfo,
@@ -31,7 +30,6 @@ import {
   unsetPendingAmountRemainingFromCommittedDonations
 } from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
-import {hexToAscii, hexToString, hexToUtf8, toAscii, toUtf8} from "web3-utils";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
@@ -726,28 +724,9 @@ const syncDonationsWithNetwork = async () => {
 
 const main = async () => {
   try {
-    console.log("Connecting to networks")
-
-    // homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
+    homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
     const instantiateForeignWeb3 = await instantiateWeb3(nodeUrl);
     foreignWeb3 = instantiateForeignWeb3.web3;
-      const transaction = await foreignWeb3.eth.getTransaction('0xad176de7ea2d299efa90ecd72e3772448e2700cfcfdfda9430468124a0e3e798');
-    console.log("transaction found", transaction)
-    const inputData = hexToAscii(transaction.input)
-    console.log("transaction found, inputData by hexToAscii:", inputData)
-    const inputDataToAscii = toAscii(transaction.input)
-    console.log("transaction found, inputData by inputDataToAscii:", inputDataToAscii)
-    const inputDataHextToUtf8 = hexToUtf8(transaction.input)
-    console.log("transaction found, inputData by inputDataHextToUtf8:", inputDataHextToUtf8)
-    const inputDataHexToString= hexToString(transaction.input)
-    console.log("transaction found, inputData by inputDataHexToString:", inputDataHexToString)
-
-    const inputDataToUtf8 = toUtf8(transaction.input)
-    console.log("transaction found, inputData by inputDataToUtf8:", inputDataToUtf8)
-    if (true){
-      console.log('end of simulation temporary')
-      return;
-    }
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
       report,
