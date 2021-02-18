@@ -70,7 +70,7 @@ const updateUserInfo = async (data: {
 }
 
 const main = async () => {
-  const web3 = await instantiateWeb3(nodeUrl);
+  const web3 = (await instantiateWeb3(nodeUrl)).web3;
   console.log('connected to web3')
   const usersWithoutNames = await userModel.find({
     name: ''
