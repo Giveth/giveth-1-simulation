@@ -1,3 +1,8 @@
+/**
+ * This script find users that dont have name and with getting events from db
+ * and fetch transaction info from rinkeby and update in db
+ */
+
 import {instantiateWeb3} from "../services/blockChainService";
 import * as mongoose from 'mongoose';
 import {userModel, UserMongooseDocument} from "../models/users.model";
@@ -69,7 +74,7 @@ const updateUserInfo = async (data: {
   if (userInfo.name || userInfo.url){
 
     console.log('updated user ',{...userInfo, address:data.user.address})
-    // await userModel.findOneAndUpdate({address: data.user.address},userInfo)
+    await userModel.findOneAndUpdate({address: data.user.address},userInfo)
   }
 
 
