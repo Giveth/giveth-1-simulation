@@ -724,9 +724,17 @@ const syncDonationsWithNetwork = async () => {
 
 const main = async () => {
   try {
+    console.log("Connecting to networks")
+
     homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
     const instantiateForeignWeb3 = await instantiateWeb3(nodeUrl);
     foreignWeb3 = instantiateForeignWeb3.web3;
+    const transaction = await foreignWeb3.eth.getTransaction('0xad176de7ea2d299efa90ecd72e3772448e2700cfcfdfda9430468124a0e3e798');
+    console.log("transaction found", transaction)
+    if (true){
+      console.log('end of simulation temporary')
+      return;
+    }
     liquidPledging = instantiateForeignWeb3.liquidPledging;
     const blockChainData = await fetchBlockchainData({
       report,
