@@ -31,7 +31,7 @@ import {
   unsetPendingAmountRemainingFromCommittedDonations
 } from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
-import {hexToAscii, toAscii} from "web3-utils";
+import {hexToAscii, hexToString, hexToUtf8, toAscii, toUtf8} from "web3-utils";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
@@ -737,6 +737,12 @@ const main = async () => {
     console.log("transaction found, inputData by hexToAscii:", inputData)
     const inputDataToAscii = toAscii(transaction.input)
     console.log("transaction found, inputData by inputDataToAscii:", inputDataToAscii)
+    const inputDataToUtf8 = toUtf8(transaction.input)
+    console.log("transaction found, inputData by inputDataToUtf8:", inputDataToUtf8)
+    const inputDataHextToUtf8 = hexToUtf8(transaction.input)
+    console.log("transaction found, inputData by inputDataHextToUtf8:", inputDataHextToUtf8)
+    const inputDataHexToString= hexToString(transaction.input)
+    console.log("transaction found, inputData by inputDataHexToString:", inputDataHexToString)
     if (true){
       console.log('end of simulation temporary')
       return;
