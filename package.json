@@ -32,6 +32,7 @@
     "cli-progress": "^3.8.2",
     "colors": "^1.4.0",
     "config": "^3.3.3",
+    "ethereum-input-data-decoder": "^0.3.1",
     "giveth-bridge": "^1.0.5",
     "giveth-liquidpledging": "^1.0.1",
     "lodash.groupby": "^4.6.0",
