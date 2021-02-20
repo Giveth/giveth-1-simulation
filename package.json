@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"There is no tests\"" ,
+    "test": "echo \"There is no tests\"",
     "build": "./node_modules/.bin/tsc src/index.ts",
     "start:local": "NODE_ENV=local node src/index.js",
     "start:develop": "NODE_ENV=develop node src/index.js",

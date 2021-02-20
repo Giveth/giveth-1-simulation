@@ -12,7 +12,7 @@ jobs:
         with:
           node-version: 10.x
       - name: install dependencies
-        run: npm install
+        run: npm ci
       - name: run linter
         run: npm run lint
       - name: build
