@@ -1,6 +1,6 @@
-import { DonationMongooseDocument } from '../models/donations.model';
-import { Admin } from 'mongodb';
-import { PledgeAdminMongooseDocument } from '../models/pledgeAdmins.model';
+import {DonationMongooseDocument} from '../models/donations.model';
+import {Admin} from 'mongodb';
+import {PledgeAdminMongooseDocument} from '../models/pledgeAdmins.model';
 
 export interface EventReturnValues {
   from: string,
@@ -53,12 +53,12 @@ export interface AdminInterface {
 }
 
 export interface DelegateInfoInterface {
-  delegateId: string,
+  delegateId: string | number,
   delegateTypeId: string,
   delegateType: string,
   intendedProjectType: string,
   intendedProjectTypeId: string,
-  intendedProjectId: string,
+  intendedProjectId: string | number,
 }
 
 
@@ -96,7 +96,7 @@ export interface ReportInterface {
   syncProjectsSpentTime: number,
   syncDonationsSpentTime: number,
   syncPledgeAdminsSpentTime: number,
-  syncMilestoneSpentTime:number,
+  syncMilestoneSpentTime: number,
   createdDacs: number,
   createdCampaigns: number,
   createdMilestones: number,
@@ -115,18 +115,18 @@ export interface ReportInterface {
   removedPendingAmountRemainingCount: number,
 }
 
-export interface Token{
-  symbol:string,
-  name :string,
-  address:string,
-  foreignAddress:string,
-  decimals:number,
-  rateEqSymbol?:string
+export interface Token {
+  symbol: string,
+  name: string,
+  address: string,
+  foreignAddress: string,
+  decimals: number,
+  rateEqSymbol?: string
 }
 
 export interface BaseCodeData {
-  campaignBase:any,
-  lppCappedMilestoneBase:any,
-  lpMilestoneBase:any,
-  bridgedMilestoneBase:any,
+  campaignBase: any,
+  lppCappedMilestoneBase: any,
+  lpMilestoneBase: any,
+  bridgedMilestoneBase: any,
 }

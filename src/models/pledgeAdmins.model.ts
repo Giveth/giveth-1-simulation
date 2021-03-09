@@ -9,6 +9,7 @@ export const AdminTypes = {
 
 export interface PledgeAdminMongooseDocument extends Document {
   type:string,
+  id:number,
   typeId:string
 }
 
