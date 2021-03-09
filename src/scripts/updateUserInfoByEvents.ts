@@ -7,6 +7,7 @@ import {instantiateWeb3} from "../services/blockChainService";
 import * as mongoose from 'mongoose';
 import {userModel, UserMongooseDocument} from "../models/users.model";
 import {eventModel} from "../models/events.model";
+import {pledgeAdminModel, PledgeAdminMongooseDocument} from "../models/pledgeAdmins.model";
 
 const config = require('config')
 const {nodeUrl} = config.get('blockchain');
@@ -42,39 +43,48 @@ const getNameAndUrlFromAddGiverTransactionInput = (input: string): {
 }
 
 const updateUserInfo = async (data: {
-  user: UserMongooseDocument
-  web3:any
+  address: string,
+  web3: any
 }) => {
-  let event = await eventModel.findOne({
-    event: 'GiverUpdated',
-    'returnValues.idGiver': data.user.giverId
+  const {address, web3} = data
+  const pledgeAdmins = await pledgeAdminModel.find({
+    typeId:address,
+    type:'giver'
   }).sort({createdAt: -1});
-  if (!event) {
-    event = await eventModel.findOne({
-      event: 'GiverAdded',
-      'returnValues.idGiver': data.user.giverId
+  // console.log('pledgeAdmins length', pledgeAdmins.length)
+  for (const  pledgeAdmin  of pledgeAdmins){
+    const giverId = String(pledgeAdmin.id);
+    let event = await eventModel.findOne({
+      event: 'GiverUpdated',
+      'returnValues.idGiver': giverId
     }).sort({createdAt: -1});
-  }
-  if (!event){
-    return;
-  }
-  const transaction = await data.web3.eth.getTransaction(event.transactionHash)
-  if(!transaction){
-    return
-  }
-  let userInfo : {
-    name:string,
-    url:string
-  }
-  if (event.event === 'GiverUpdated'){
-    userInfo = await getNameAndUrlFromUpdateGiverTransactionInput(transaction.input)
-  }else{
-    userInfo = await getNameAndUrlFromAddGiverTransactionInput(transaction.input)
-  }
-  if (userInfo.name || userInfo.url){
-
-    console.log('updated user ',{...userInfo, address:data.user.address})
-    await userModel.findOneAndUpdate({address: data.user.address},userInfo)
+    if (!event) {
+      event = await eventModel.findOne({
+        event: 'GiverAdded',
+        'returnValues.idGiver': giverId
+      }).sort({createdAt: -1});
+    }
+    if (!event) {
+      return;
+    }
+    const transaction = await web3.eth.getTransaction(event.transactionHash)
+    if (!transaction) {
+      return
+    }
+    let userInfo: {
+      name: string,
+      url: string
+    }
+    if (event.event === 'GiverUpdated') {
+      userInfo = await getNameAndUrlFromUpdateGiverTransactionInput(transaction.input)
+    } else {
+      userInfo = await getNameAndUrlFromAddGiverTransactionInput(transaction.input)
+    }
+    if (userInfo.name || userInfo.url) {
+      console.log('updated user ', {...userInfo, address})
+      // await userModel.findOneAndUpdate({address}, userInfo)
+      continue;
+    }
   }
 
 
@@ -86,8 +96,8 @@ const main = async () => {
   const usersWithoutNames = await userModel.find({
     name: ''
   });
-  for (const user of usersWithoutNames){
-    await updateUserInfo({user, web3})
+  for (const user of usersWithoutNames) {
+    await updateUserInfo({address:user.address, web3})
   }
 }
 const mongoUrl = config.get('mongodb') as string;
