@@ -274,13 +274,6 @@ const handleFromDonations = async (from: string, to: string,
           fromAmount = fromAmount.minus(min);
           if (new BigNumber(item.amountRemaining).isZero()) {
             consumedCandidates += 1;
-            // It's approve or reject
-            if (item.status === DonationStatus.TO_APPROVE) {
-              item.status =
-                Number(toPledge.owner) === item.intendedProjectId
-                  ? DonationStatus.COMMITTED
-                  : DonationStatus.REJECTED;
-            }
           }
           logger.debug(
             `Amount ${min.toFixed()} is reduced from ${JSON.stringify(
