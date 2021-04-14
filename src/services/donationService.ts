@@ -4,6 +4,7 @@ import {DonationObjectInterface, ExtendedDonation, PledgeInterface, ReportInterf
 import {getTokenByAddress, getTokenCutoff} from "../utils/tokenUtility";
 import {getLogger} from "../utils/logger";
 import {conversationModel} from "../models/conversations.model";
+import {updateOneDonation} from "../repositories/donationRepository";
 
 const logger = getLogger();
 
@@ -91,7 +92,9 @@ export async function unsetPendingAmountRemainingFromCommittedDonations(options:
       pendingAmountRemaining :donation.pendingAmountRemaining
     })
   })
-  await donationModel.updateMany(query,{$unset:{pendingAmountRemaining:1}} )
+  await donationModel.updateMany(query,{
+    $set:{updatedBySimulationDate : new Date()},
+    $unset:{pendingAmountRemaining:1}} )
 
 
 }
@@ -173,16 +176,10 @@ export async function fixConflictInDonations(
             if(token && tokenCutoff && tokenCutoff.cutoff){
               report.updateAmountRemaining ++ ;
               promises.push(
-                donationModel.updateOne(
-                  {_id},
-                  {
-                    $set: {
-                      amountRemaining,
-                      lessThanCutoff: tokenCutoff.cutoff.gt(amountRemaining),
-                    },
-                  },
-                  {timestamps: false}
-                ),
+                updateOneDonation(_id,{
+                  amountRemaining,
+                  lessThanCutoff: tokenCutoff.cutoff.gt(amountRemaining),
+                } ),
               );
             }
 
@@ -206,10 +203,9 @@ export async function fixConflictInDonations(
           );
           if (fixConflicts) {
             logger.debug('Updating...');
-            promises.push(donationModel.updateOne(
-              {_id},
-              {status},
-              {timestamps: false}
+            promises.push(updateOneDonation(
+              _id,
+              {status}
               ));
           }
         }
