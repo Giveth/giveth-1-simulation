@@ -25,6 +25,7 @@ import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {
+  addCommitTimeForToApproveDonations,
   fetchDonationsInfo,
   fixConflictInDonations,
   unsetPendingAmountRemainingFromCommittedDonations
@@ -680,7 +681,6 @@ const syncDonationsWithNetwork = async () => {
     donationMap,
     fixConflicts,
     pledges,
-    report,
     unusedDonationMap
   });
 };
@@ -732,6 +732,7 @@ const main = async () => {
     db.once('open', async () => {
       logger.info('Connected to Mongo');
       try {
+        await addCommitTimeForToApproveDonations(liquidPledging)
         await syncDacs({
           report,
           homeWeb3,
@@ -769,7 +770,7 @@ const main = async () => {
         //     events
         //   }
         // );
-        await unsetPendingAmountRemainingFromCommittedDonations({report});
+        await unsetPendingAmountRemainingFromCommittedDonations();
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {
