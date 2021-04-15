@@ -37,6 +37,8 @@ export interface DonationMongooseDocument extends  Document {
   tokenAddress:string,
   isReturn :boolean,
   usdValue:number,
+  createdBySimulation ?:boolean
+  updatedBySimulationDate ?:Date,
   actionTakerAddress:string,
 }
 
@@ -72,6 +74,8 @@ const donation = new Schema(
     txHash: { type: String, index: true },
     homeTxHash: { type: String },
     commitTime: { type: Date },
+    updatedBySimulationDate: { type: Date },
+    createdBySimulation: { type: Boolean, default: false },
     mined: { type: Boolean, default: false, required: true, index: true },
     parentDonations: { type: [String], default: [], required: true },
     isReturn: { type: Boolean, default: false },
