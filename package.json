@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"There is no tests\"",
     "build": "./node_modules/.bin/tsc src/index.ts",
-    "start:local": "NODE_ENV=local node src/index.js",
+    "start:local": "NODE_ENV=default node src/index.js",
     "start:develop": "NODE_ENV=develop node src/index.js",
     "start:beta": "NODE_ENV=beta node src/index.js",
     "lint": "./node_modules/.bin/tslint -c  ./tslint.json '{src,test}/**/*.ts'",
