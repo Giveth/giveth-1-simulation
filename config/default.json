@@ -8,7 +8,7 @@
   "updateNetworkCache": true,
   "emailReport": true,
   "emailSimulationError": true,
-  "simulationTimeoutInMinutes": 10,
+  "simulationTimeoutInMinutes": 20,
   "givethMaintainersEmail":["mranjbar.z2993@gmail.com"],
   "givethDevMailList": [
     "mranjbar.z2993@gmail.com"
