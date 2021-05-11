@@ -802,3 +802,12 @@ main()
   .then(() => {
   })
   .catch(e => terminateScript(e, 1));
+
+const simulationTimeoutInMinutes = config.simulationTimeoutInMinutes || 30;
+setTimeout(()=>{
+  console.log(`If you see this log it mean the process doesnt exit after ${simulationTimeoutInMinutes} minutes,
+  so exit process manually`);
+  // When there is problem in connecting network, there would be infinity reconnect and logs
+  // so the log files may fill the server storage
+  process.exit(1);
+}, simulationTimeoutInMinutes * 60 * 1000)
