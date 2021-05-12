@@ -78,28 +78,6 @@ export async function fetchDonationsInfo():
 }
 
 
-export async function unsetPendingAmountRemainingFromCommittedDonations() {
-  const query = {
-    status: {$ne: DonationStatus.PENDING},
-    pendingAmountRemaining: {$exists: true}
-  };
-  const notPendingDonationsWithPendingAmountRemaining = await donationModel.find(query);
-  report.removedPendingAmountRemainingCount = notPendingDonationsWithPendingAmountRemaining.length;
-  console.log('Removed pendingAmountFromDonations count', notPendingDonationsWithPendingAmountRemaining.length)
-  notPendingDonationsWithPendingAmountRemaining.forEach(donation => {
-    logger.error('Remove pendingAmountFromDonations', {
-      _id: donation._id,
-      pendingAmountRemaining: donation.pendingAmountRemaining
-    })
-  })
-  await donationModel.updateMany(query, {
-    $set: {updatedBySimulationDate: new Date()},
-    $unset: {pendingAmountRemaining: 1}
-  })
-
-
-}
-
 export async function fixConflictInDonations(
   options: {
     unusedDonationMap: Map<string, any>,

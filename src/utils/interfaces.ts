@@ -112,7 +112,6 @@ export interface ReportInterface {
   fetchedNewPledgeCount: number,
   fetchedNewPledgeAdminCount: number,
   fetchedNewEventsCount: number,
-  removedPendingAmountRemainingCount: number,
 }
 
 export interface Token {

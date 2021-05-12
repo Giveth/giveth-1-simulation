@@ -28,7 +28,6 @@ import {
   addCommitTimeForToApproveDonations,
   fetchDonationsInfo,
   fixConflictInDonations,
-  unsetPendingAmountRemainingFromCommittedDonations
 } from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
 import {report} from "./utils/reportUtils";
@@ -770,7 +769,6 @@ const main = async () => {
         //     events
         //   }
         // );
-        await unsetPendingAmountRemainingFromCommittedDonations();
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {

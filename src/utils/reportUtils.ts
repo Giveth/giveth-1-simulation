@@ -20,5 +20,4 @@ export const report = {
   fetchedNewEventsCount: 0,
   fetchedNewPledgeAdminCount: 0,
   fetchedNewPledgeCount: 0,
-  removedPendingAmountRemainingCount: 0
 };

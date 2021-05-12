@@ -86,10 +86,6 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
                   <td style='${tableCellStyle}'>createdPledgeAdmins count</td>
                   <td style='${tableCellStyle}'>${reportData.createdPledgeAdmins}</td>
                 </tr>
-                <tr>
-                  <td style='${tableCellStyle}'>removedPendingAmountRemainingCount</td>
-                  <td style='${tableCellStyle}'>${reportData.removedPendingAmountRemainingCount}</td>
-                </tr>
               </table>
       `,
       // cta: `Manage Milestone`,
@@ -109,8 +105,7 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
       reportData.createdPledgeAdmins ||
       reportData.updateAmountRemaining ||
       reportData.updatedDonations ||
-      reportData.deletedDonations ||
-      reportData.removedPendingAmountRemainingCount
+      reportData.deletedDonations
     )
     const summaryMessage = resolvedConflicts ?
       'There were some conflicts that resolved' :
