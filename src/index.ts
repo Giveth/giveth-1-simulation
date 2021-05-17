@@ -25,40 +25,19 @@ import {updateMilestonesFinalStatus} from "./services/milestoneService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {
+  addCommitTimeForToApproveDonations,
   fetchDonationsInfo,
   fixConflictInDonations,
   unsetPendingAmountRemainingFromCommittedDonations
 } from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
+import {report} from "./utils/reportUtils";
+import {updateOneDonation} from "./repositories/donationRepository";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
 const dappMailerSecret = config.get('dappMailerSecret') as string;
 
-const report = {
-  syncDelegatesSpentTime: 0,
-  syncProjectsSpentTime: 0,
-  syncDonationsSpentTime: 0,
-  syncPledgeAdminsSpentTime: 0,
-  syncMilestoneSpentTime: 0,
-  createdDacs: 0,
-  createdCampaigns: 0,
-  createdMilestones: 0,
-  createdDonations: 0,
-  updatedDonations: 0,
-  updatedDonationsParent: 0,
-  updatedDonationsMined: 0,
-  updateAmountRemaining: 0,
-  deletedDonations: 0,
-  createdPledgeAdmins: 0,
-  updatedMilestoneStatus: 0,
-  processedEvents: 0,
-  correctFailedDonations: 0,
-  fetchedNewEventsCount: 0,
-  fetchedNewPledgeAdminCount: 0,
-  fetchedNewPledgeCount: 0,
-  removedPendingAmountRemainingCount: 0
-};
 
 const cacheDir = config.get('cacheDir');
 const updateState = config.get('updateNetworkCache');
@@ -214,13 +193,10 @@ const handleFromDonations = async (from: string, to: string,
         logger.debug(JSON.stringify(toFixDonation, null, 2));
 
         if (fixConflicts) {
-          logger.debug('Updating...');
           report.updatedDonations++;
-          await donationModel.updateOne(
-            {_id: toFixDonation._id},
-            {status: toFixDonation.status, pledgeId: to},
-            {timestamps: false}
-          );
+          await updateOneDonation(toFixDonation._id,
+            {status: toFixDonation.status,
+              pledgeId: to})
           report.correctFailedDonations++;
         }
       }
@@ -506,6 +482,7 @@ const handleToDonations = async ({
         actionTakerAddress,
         amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
         mined: true,
+        createdBySimulation:true,
         createdAt: new Date(timestamp * 1000),
       };
 
@@ -563,10 +540,8 @@ const handleToDonations = async ({
 
     if (toDonation.mined === false) {
       logger.error(`Donation ${toDonation._id} mined flag should be true`);
-      logger.debug('Updating...');
-      await donationModel.updateOne({_id: toDonation._id},
-        {mined: true},
-        {timestamps: false});
+      await updateOneDonation(toDonation._id,
+        {mined: true})
       report.updatedDonationsMined++;
       toDonation.mined = true;
     }
@@ -580,13 +555,9 @@ const handleToDonations = async ({
     ) {
       logger.error(`Parent of ${toDonation._id} should be updated to ${usedFromDonations}`);
       if (fixConflicts) {
-        logger.debug('Updating...');
         toDonation.parentDonations = usedFromDonations;
-        await donationModel.updateOne(
-          {_id: toDonation._id},
-          {parentDonations: usedFromDonations},
-          {timestamps: false}
-        );
+        await updateOneDonation(toDonation._id,
+          {parentDonations: usedFromDonations})
         report.updatedDonationsParent++;
 
       }
@@ -594,11 +565,8 @@ const handleToDonations = async ({
 
     if (toDonation.isReturn !== isReturn) {
       logger.error(`Donation ${toDonation._id} isReturn flag should be ${isReturn}`);
-      logger.debug('Updating...');
-      await donationModel.updateOne(
-        {_id: toDonation._id},
-        {isReturn},
-        {timestamps: false});
+      await updateOneDonation(toDonation._id,
+        {isReturn})
       toDonation.isReturn = isReturn;
     }
 
@@ -608,12 +576,9 @@ const handleToDonations = async ({
       logger.error(
         `Donation ${toDonation._id} usdValue is ${usdValue} but should be updated to ${toDonation.usdValue}`,
       );
-      logger.debug('Updating...');
-      await donationModel.updateOne(
-        {_id: toDonation._id},
-        {usdValue: toDonation.usdValue},
-        {timestamps: false});
-
+      await updateOneDonation(toDonation._id,
+        {usdValue: toDonation.usdValue}
+        )
     }
 
     toDonation.txHash = transactionHash;
@@ -716,7 +681,6 @@ const syncDonationsWithNetwork = async () => {
     donationMap,
     fixConflicts,
     pledges,
-    report,
     unusedDonationMap
   });
 };
@@ -768,6 +732,7 @@ const main = async () => {
     db.once('open', async () => {
       logger.info('Connected to Mongo');
       try {
+        await addCommitTimeForToApproveDonations(liquidPledging)
         await syncDacs({
           report,
           homeWeb3,
@@ -805,7 +770,7 @@ const main = async () => {
         //     events
         //   }
         // );
-        await unsetPendingAmountRemainingFromCommittedDonations({report});
+        await unsetPendingAmountRemainingFromCommittedDonations();
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {
@@ -837,3 +802,12 @@ main()
   .then(() => {
   })
   .catch(e => terminateScript(e, 1));
+
+const simulationTimeoutInMinutes = config.simulationTimeoutInMinutes || 30;
+setTimeout(()=>{
+  console.log(`If you see this log it mean the process doesnt exit after ${simulationTimeoutInMinutes} minutes,
+  so exit process manually`);
+  // When there is problem in connecting network, there would be infinity reconnect and logs
+  // so the log files may fill the server storage
+  process.exit(1);
+}, simulationTimeoutInMinutes * 60 * 1000)
