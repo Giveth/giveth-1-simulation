@@ -1,12 +1,14 @@
-export const report = {
+import {ReportInterface} from "./interfaces";
+
+export const report :ReportInterface= {
   syncDelegatesSpentTime: 0,
   syncProjectsSpentTime: 0,
   syncDonationsSpentTime: 0,
   syncPledgeAdminsSpentTime: 0,
-  syncMilestoneSpentTime: 0,
-  createdDacs: 0,
+  syncTraceSpentTime: 0,
+  createdCommunities: 0,
   createdCampaigns: 0,
-  createdMilestones: 0,
+  createdTraces: 0,
   createdDonations: 0,
   updatedDonations: 0,
   updatedDonationsParent: 0,
@@ -14,7 +16,7 @@ export const report = {
   updateAmountRemaining: 0,
   deletedDonations: 0,
   createdPledgeAdmins: 0,
-  updatedMilestoneStatus: 0,
+  updatedTraceStatus: 0,
   processedEvents: 0,
   correctFailedDonations: 0,
   fetchedNewEventsCount: 0,

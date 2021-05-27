@@ -19,9 +19,9 @@ import {Logger} from 'winston';
 import {getLogger} from './utils/logger';
 import {getActionTakerAddress, getHomeTxHashForDonation, getTransaction} from './utils/web3Helpers';
 import {sendReportEmail, sendSimulationErrorEmail} from './services/emailService';
-import {syncDacs} from './services/dacServices'
+import {syncCommunities} from './services/communityServices'
 import {syncPledgeAdminsAndProjects} from "./services/pledgeAdminService";
-import {updateMilestonesFinalStatus} from "./services/milestoneService";
+import {updateTracesFinalStatus} from "./services/traceService";
 import {fetchBlockchainData, instantiateWeb3} from "./services/blockChainService";
 import {cancelProject, updateEntityDonationsCounter} from "./services/projectService";
 import {
@@ -418,19 +418,19 @@ const handleToDonations = async ({
       }
       expectedToDonation.tokenAddress = token.address;
       const delegationInfo: DelegateInfoInterface = <DelegateInfoInterface>{};
-      // It's delegated to a DAC
+      // It's delegated to a COMMUNITY
       if (toPledge.delegates.length > 0) {
         const [delegate] = toPledge.delegates;
-        const dacPledgeAdmin = await pledgeAdminModel.findOne({id: Number(delegate.id)});
-        if (!dacPledgeAdmin) {
-          // This is wrong, why should we terminate if there is no dacPledgeAdmin
-          logger.error(`No dac found for id: ${delegate.id}`);
-          terminateScript(`No dac found for id: ${delegate.id}`);
+        const communityPledgeAdmin = await pledgeAdminModel.findOne({id: Number(delegate.id)});
+        if (!communityPledgeAdmin) {
+          // This is wrong, why should we terminate if there is no communityPledgeAdmin
+          logger.error(`No community found for id: ${delegate.id}`);
+          terminateScript(`No community found for id: ${delegate.id}`);
           return;
         }
-        delegationInfo.delegateId = dacPledgeAdmin.id;
-        delegationInfo.delegateTypeId = dacPledgeAdmin.typeId;
-        delegationInfo.delegateType = dacPledgeAdmin.type;
+        delegationInfo.delegateId = communityPledgeAdmin.id;
+        delegationInfo.delegateTypeId = communityPledgeAdmin.typeId;
+        delegationInfo.delegateType = communityPledgeAdmin.type;
 
         // Has intended project
         const {intendedProject} = toPledge;
@@ -721,7 +721,7 @@ const main = async () => {
     }
 
     /*
-       Find conflicts in milestone donation counter
+       Find conflicts in trace donation counter
       */
     const mongoUrl = config.get('mongodb') as string;
     mongoose.connect(mongoUrl);
@@ -733,7 +733,7 @@ const main = async () => {
       logger.info('Connected to Mongo');
       try {
         await addCommitTimeForToApproveDonations(liquidPledging)
-        await syncDacs({
+        await syncCommunities({
           report,
           homeWeb3,
           foreignWeb3,
@@ -754,9 +754,9 @@ const main = async () => {
           kernel: await getKernel()
         });
         await syncDonationsWithNetwork();
-        await updateEntityDonationsCounter(AdminTypes.DAC);
+        await updateEntityDonationsCounter(AdminTypes.COMMUNITY);
         await updateEntityDonationsCounter(AdminTypes.CAMPAIGN);
-        await updateEntityDonationsCounter(AdminTypes.MILESTONE);
+        await updateEntityDonationsCounter(AdminTypes.TRACE);
 
         /**
          * The update status should not work because we shoul get some events like
@@ -764,7 +764,7 @@ const main = async () => {
          * we have some incomplete works about this in this feature
          * @see{@link https://github.com/Giveth/giveth-1-simulation/tree/f_20_fetch_all_events}
          */
-        // await updateMilestonesFinalStatus(
+        // await updateTracesFinalStatus(
         //   {
         //     report,
         //     events

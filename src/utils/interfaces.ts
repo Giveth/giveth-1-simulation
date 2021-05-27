@@ -96,10 +96,10 @@ export interface ReportInterface {
   syncProjectsSpentTime: number,
   syncDonationsSpentTime: number,
   syncPledgeAdminsSpentTime: number,
-  syncMilestoneSpentTime: number,
-  createdDacs: number,
+  syncTraceSpentTime: number,
+  createdCommunities: number,
   createdCampaigns: number,
-  createdMilestones: number,
+  createdTraces: number,
   createdDonations: number,
   updatedDonations: number,
   updatedDonationsMined: number,
@@ -113,6 +113,7 @@ export interface ReportInterface {
   fetchedNewPledgeAdminCount: number,
   fetchedNewEventsCount: number,
   removedPendingAmountRemainingCount: number,
+  updatedTraceStatus: number,
 }
 
 export interface Token {

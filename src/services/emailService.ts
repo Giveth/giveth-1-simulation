@@ -39,20 +39,20 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
                   <td style='${tableCellStyle}'>${reportData.syncPledgeAdminsSpentTime} seconds</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>syncMilestoneSpentTime</td>
-                  <td style='${tableCellStyle}'>${reportData.syncMilestoneSpentTime} seconds</td>
+                  <td style='${tableCellStyle}'>syncTraceSpentTime</td>
+                  <td style='${tableCellStyle}'>${reportData.syncTraceSpentTime} seconds</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdDacs count</td>
-                  <td style='${tableCellStyle}'>${reportData.createdDacs}</td>
+                  <td style='${tableCellStyle}'>createdCommunities count</td>
+                  <td style='${tableCellStyle}'>${reportData.createdCommunities}</td>
                 </tr>
                 <tr>
                   <td style='${tableCellStyle}'>createdCampaigns count</td>
                   <td style='${tableCellStyle}'>${reportData.createdCampaigns}</td>
                 </tr>
                 <tr>
-                  <td style='${tableCellStyle}'>createdMilestones count</td>
-                  <td style='${tableCellStyle}'>${reportData.createdMilestones}</td>
+                  <td style='${tableCellStyle}'>createdTraces count</td>
+                  <td style='${tableCellStyle}'>${reportData.createdTraces}</td>
                 </tr>
                 <tr>
                   <td style='${tableCellStyle}'>createdDonations count</td>
@@ -92,8 +92,8 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
                 </tr>
               </table>
       `,
-      // cta: `Manage Milestone`,
-      // ctaRelativeUrl: `/campaigns/${data.campaignId}/milestones/${data.milestoneId}`,
+      // cta: `Manage Trace`,
+      // ctaRelativeUrl: `/campaigns/${data.campaignId}/milestones/${data.traceId}`,
       unsubscribeType: 'simulation-report',
       unsubscribeReason: `You receive this email because you are in Giveth1-dev team`,
       // message: data.message,
@@ -103,9 +103,9 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
       reportData.updatedDonationsParent ||
       reportData.correctFailedDonations ||
       reportData.createdCampaigns ||
-      reportData.createdDacs ||
+      reportData.createdCommunities ||
       reportData.createdDonations ||
-      reportData.createdMilestones ||
+      reportData.createdTraces ||
       reportData.createdPledgeAdmins ||
       reportData.updateAmountRemaining ||
       reportData.updatedDonations ||

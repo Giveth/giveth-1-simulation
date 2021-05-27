@@ -29,7 +29,7 @@ const campaign = new Schema(
         txHash: {type: String, index: true, required: true},
         peopleCount: {type: Number},
         donationCounters: [DonationCounter],
-        dacs: {type: [String]},
+        communities: {type: [String]},
         reviewerAddress: {type: String, required: true, index: true},
         ownerAddress: {type: String, required: true, index: true},
         coownerAddress: {type: String, required: false, index: true},
@@ -48,7 +48,7 @@ const campaign = new Schema(
         prevUrl: {type: String}, // To store deleted/cleared lost ipfs values
         commitTime: {type: Number},
         communityUrl: {type: String},
-        archivedMilestones: {type: [Number]},
+        archivedTraces: {type: [Number]},
         isRecovered:{type: Boolean}
     },
     {

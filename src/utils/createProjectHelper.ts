@@ -8,10 +8,10 @@ import {
   executeRequestsAsBatch,
   getTransaction,
 } from './web3Helpers';
-import {MilestoneTypes} from '../models/milestones.model';
+import {TraceTypes} from '../models/traces.model';
 import {ANY_TOKEN, getTokenByForeignAddress} from './tokenUtility';
 import {BaseCodeData, ProjectInterface} from './interfaces';
-import {DacStatus} from '../models/dacs.model';
+import {CommunityStatus} from '../models/communities.model';
 
 
 let baseCodeData: BaseCodeData;
@@ -48,34 +48,34 @@ const getMilestoneAndCampaignBaseCodes = async (options: {
   return baseCodeData;
 };
 
-const managerMethod = (milestoneType: string): string =>
-  milestoneType === MilestoneTypes.LPPCappedMilestone ? 'milestoneManager' : 'manager';
+const managerMethod = (traceType: string): string =>
+  traceType === TraceTypes.LPPCappedMilestone ? 'milestoneManager' : 'manager';
 
-const getCampaignReviewer = (options: { milestoneType: string, milestoneContract: any }): string => {
-  const {milestoneType, milestoneContract} = options;
-  milestoneType === MilestoneTypes.LPPCappedMilestone
-    ? milestoneContract.campaignReviewer()
+const getCampaignReviewer = (options: { traceType: string, traceContract: any }): string => {
+  const {traceType, traceContract} = options;
+  traceType === TraceTypes.LPPCappedMilestone
+    ? traceContract.campaignReviewer()
     : undefined;
-  return milestoneType
+  return traceType
 };
 
 
-const getMilestoneContract = (data: { web3: any, milestoneType: string, projectPlugin: string }) => {
-  const {milestoneType, projectPlugin, web3} = data;
-  switch (milestoneType) {
-    case MilestoneTypes.LPPCappedMilestone:
+const getTraceContract = (data: { web3: any, traceType: string, projectPlugin: string }) => {
+  const {traceType, projectPlugin, web3} = data;
+  switch (traceType) {
+    case TraceTypes.LPPCappedMilestone:
       return new LPPCappedMilestone(web3, projectPlugin);
-    case MilestoneTypes.LPMilestone:
+    case TraceTypes.LPMilestone:
       return new LPMilestone(web3, projectPlugin);
-    case MilestoneTypes.BridgedMilestone:
+    case TraceTypes.BridgedMilestone:
       return new BridgedMilestone(web3, projectPlugin);
     default:
-      throw new Error('Unknown Milestone type ->' + milestoneType);
+      throw new Error('Unknown Milestone type ->' + traceType);
   }
 };
 
 
-export const getMilestoneTypeByProjectId = async (
+export const getTraceTypeByProjectId = async (
   options : {
     projectId: string,
     liquidPledging: any,
@@ -101,22 +101,22 @@ export const getMilestoneTypeByProjectId = async (
     kernel
   });
   let isCampaign;
-  let milestoneType;
+  let traceType;
   // eslint-disable-next-line default-case
   switch (baseCode) {
     case bridgedMilestoneBase:
       isCampaign = false;
-      milestoneType = MilestoneTypes.BridgedMilestone;
+      traceType = TraceTypes.BridgedMilestone;
       break;
 
     case lpMilestoneBase:
       isCampaign = false;
-      milestoneType = MilestoneTypes.LPMilestone;
+      traceType = TraceTypes.LPMilestone;
       break;
 
     case lppCappedMilestoneBase:
       isCampaign = false;
-      milestoneType = MilestoneTypes.LPPCappedMilestone;
+      traceType = TraceTypes.LPPCappedMilestone;
       break;
 
     case campaignBase:
@@ -124,38 +124,38 @@ export const getMilestoneTypeByProjectId = async (
       break;
   }
 
-  // if isCampaign be true then milestoneType should be undefined and conversely
+  // if isCampaign be true then traceType should be undefined and conversely
   return {
     isCampaign,
-    milestoneType,
+    traceType,
     project,
   };
 }
 
-export const getMilestoneDataForCreate = async (options: {
-  milestoneType: string,
+export const getTraceDataForCreate = async (options: {
+  traceType: string,
   project: ProjectInterface,
   projectId: string,
   txHash: string
   foreignWeb3:any,
   homeWeb3:any,
 }) => {
-  const {milestoneType, project,homeWeb3,
+  const {traceType, project,homeWeb3,
     foreignWeb3, projectId, txHash} = options;
-  const milestoneContract = getMilestoneContract({
-    milestoneType,
+  const traceContract = getTraceContract({
+    traceType,
     projectPlugin: project.plugin,
     web3:foreignWeb3
   });
   const responses = await Promise.all([
-    getCampaignReviewer({milestoneType, milestoneContract}),
-    milestoneContract.recipient(),
+    getCampaignReviewer({traceType, traceContract}),
+    traceContract.recipient(),
     // batch what we can
     ...(await executeRequestsAsBatch(foreignWeb3, [
-      milestoneContract.$contract.methods.maxAmount().call.request,
-      milestoneContract.$contract.methods.reviewer().call.request,
-      milestoneContract.$contract.methods[managerMethod(milestoneType)]().call.request,
-      milestoneContract.$contract.methods.acceptedToken().call.request,
+      traceContract.$contract.methods.maxAmount().call.request,
+      traceContract.$contract.methods.reviewer().call.request,
+      traceContract.$contract.methods[managerMethod(traceType)]().call.request,
+      traceContract.$contract.methods.acceptedToken().call.request,
       foreignWeb3.eth.getTransaction.request.bind(null, txHash),
     ])),
   ]);
@@ -197,11 +197,11 @@ export const getMilestoneDataForCreate = async (options: {
     isRecovered:true,
     donationCount: 0,
     mined: true,
-    type: milestoneType,
+    type: traceType,
   };
 }
 
-export const getDacDataForCreate = async (options: {
+export const getCommunityDataForCreate = async (options: {
   from: string,
   txHash: string,
   delegateId: string,
@@ -229,7 +229,7 @@ export const getDacDataForCreate = async (options: {
     txHash,
     delegateId,
     mined: true,
-    status: DacStatus.RECOVERED,
+    status: CommunityStatus.RECOVERED,
     isRecovered:true,
     totalDonated: '0',
     currentBalance: '0',

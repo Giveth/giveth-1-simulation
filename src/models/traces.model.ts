@@ -6,7 +6,7 @@ import {DonationCounter, DonationCounterInterface} from './donationCounter.model
 //
 // See http://mongoosejs.com/docs/models.html
 // for more of what you can do here.
-export const MilestoneStatus = {
+export const TraceStatus = {
   PROPOSED: 'Proposed',
   REJECTED: 'Rejected',
   PENDING: 'Pending',
@@ -21,14 +21,14 @@ export const MilestoneStatus = {
   RECOVERED: 'Recovered',
 };
 
-export const MilestoneTypes = {
+export const TraceTypes = {
   LPPCappedMilestone: 'LPPCappedMilestone',
   BridgedMilestone: 'BridgedMilestone',
   LPMilestone: 'LPMilestone',
 };
 
 
-export interface MilestoneMongooseDocument extends  Document {
+export interface TraceMongooseDocument extends  Document {
   title:string,
   status:string,
   projectId:number,
@@ -40,7 +40,7 @@ export interface MilestoneMongooseDocument extends  Document {
 
 }
 
-const milestone = new Schema(
+const trace = new Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -49,7 +49,7 @@ const milestone = new Schema(
     maxAmount: { type: String },
     ownerAddress: { type: String, required: true },
     reviewerAddress: { type: String },
-    dacId: { type: Number },
+    communityId: { type: Number },
     recipientAddress: { type: String },
     recipientId: { type: Number}, // we can use Long here b/c lp only stores adminId in pledges as uint64
     pendingRecipientAddress: { type: String },
@@ -59,7 +59,7 @@ const milestone = new Schema(
     status: {
       type: String,
       require: true,
-      enum: Object.values(MilestoneStatus),
+      enum: Object.values(TraceStatus),
     },
     conversionRateTimestamp: { type: Date },
     selectedFiatType: { type: String },
@@ -79,7 +79,7 @@ const milestone = new Schema(
     type: {
       type: String,
       required: true,
-      enum: Object.values(MilestoneTypes),
+      enum: Object.values(TraceTypes),
     },
 
     // these 2 fields should not be stored in mongo
@@ -88,7 +88,7 @@ const milestone = new Schema(
     message: { type: String },
     messageContext: { type: String },
     tokenAddress: { type: String, required: true },
-    projectAddedAt: { type: Date }, // Store the time milestone is accepted or added by campaign owner
+    projectAddedAt: { type: Date }, // Store the time trace is accepted or added by campaign owner
     isRecovered:{type: Boolean}
   },
   {
@@ -97,6 +97,6 @@ const milestone = new Schema(
 );
 
 
-export const milestoneModel =  model<MilestoneMongooseDocument>('milestone', milestone);
+export const traceModel =  model<TraceMongooseDocument>('trace', trace);
 
 
