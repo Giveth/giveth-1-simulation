@@ -1,13 +1,13 @@
 import {Document, model, Schema, Types} from 'mongoose';
 
 export interface ConversationMongooseDocument extends Document {
-  milestoneId:string,
+  traceId:string,
   donationId: string,
   messageContext:string
 }
 const conversationSchema = new Schema(
   {
-    milestoneId: {type: String, required: true},
+    traceId: {type: String, required: true},
     messageContext: {type: String, required: true},
     message: {type: String},
     replyToId: {type: String},

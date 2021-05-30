@@ -3,10 +3,10 @@ import {AdminTypes} from "../models/pledgeAdmins.model";
 import {createProgressBar} from "../utils/progressBar";
 import {ANY_TOKEN, getTokenByAddress, getTokenSymbolByAddress} from "../utils/tokenUtility";
 import {toBN} from "web3-utils";
-import {milestoneModel, MilestoneMongooseDocument, MilestoneStatus} from "../models/milestones.model";
+import {traceModel, TraceMongooseDocument, TraceStatus} from "../models/traces.model";
 import {campaignModel, CampaignMongooseDocument, CampaignStatus} from "../models/campaigns.model";
 import {getLogger} from "../utils/logger";
-import {dacModel, DacMongooseDocument} from "../models/dacs.model";
+import {communityModel, CommunityMongooseDocument} from "../models/communities.model";
 import {Model, model} from "mongoose";
 import BigNumber from "bignumber.js";
 import {AdminInterface} from "../utils/interfaces";
@@ -15,7 +15,7 @@ const logger = getLogger();
 const _groupBy = require('lodash.groupby');
 
 
-interface EntityType extends DacMongooseDocument, CampaignMongooseDocument, MilestoneMongooseDocument {
+interface EntityType extends CommunityMongooseDocument, CampaignMongooseDocument, TraceMongooseDocument {
   fullyFunded: boolean,
   maxAmount: string,
 }
@@ -29,11 +29,11 @@ export const updateEntityDonationsCounter = async (type: string) => {
   };
 
   let idFieldName;
-  if (type === AdminTypes.DAC) {
-    model = dacModel as unknown as Model<EntityType>;
-    // TODO I think this can be gamed if the donor refunds their donation from the dac
+  if (type === AdminTypes.COMMUNITY) {
+    model = communityModel as unknown as Model<EntityType>;
+    // TODO I think this can be gamed if the donor refunds their donation from the community
     Object.assign(donationQuery, {
-      delegateType: AdminTypes.DAC,
+      delegateType: AdminTypes.COMMUNITY,
       $and: [
         {
           $or: [{intendedProjectId: 0}, {intendedProjectId: undefined}],
@@ -50,10 +50,10 @@ export const updateEntityDonationsCounter = async (type: string) => {
       ownerType: AdminTypes.CAMPAIGN,
     });
     idFieldName = 'ownerTypeId';
-  } else if (type === AdminTypes.MILESTONE) {
-    model = milestoneModel as unknown as Model<EntityType>;
+  } else if (type === AdminTypes.TRACE) {
+    model = traceModel as unknown as Model<EntityType>;
     Object.assign(donationQuery, {
-      ownerType: AdminTypes.MILESTONE,
+      ownerType: AdminTypes.TRACE,
     });
     idFieldName = 'ownerTypeId';
   } else {
@@ -104,9 +104,9 @@ export const updateEntityDonationsCounter = async (type: string) => {
         },
       );
 
-      // Exclude returned values from canceled milestones
+      // Exclude returned values from canceled trace
       if (
-        !(type === AdminTypes.MILESTONE && entity.status === MilestoneStatus.CANCELED) &&
+        !(type === AdminTypes.TRACE && entity.status === TraceStatus.CANCELED) &&
         !(type === AdminTypes.CAMPAIGN && entity.status === CampaignStatus.CANCELED)
       ) {
         totalDonated = returnedTokenDonations.reduce(
@@ -190,7 +190,7 @@ export const updateEntityDonationsCounter = async (type: string) => {
     const token = getTokenByAddress(tokenAddress);
     const foundDonationCounter = token && donationCounters.find(dc => dc.symbol === token.symbol);
     const fullyFunded = !!(
-      type === AdminTypes.MILESTONE &&
+      type === AdminTypes.TRACE &&
       donationCounters.length > 0 &&
       token &&
       token.foreignAddress !== ANY_TOKEN.foreignAddress &&

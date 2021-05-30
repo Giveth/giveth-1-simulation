@@ -1,9 +1,9 @@
 import {Document, model, Schema, Types} from "mongoose";
 export const AdminTypes = {
   GIVER: 'giver',
-  DAC: 'dac',
+  COMMUNITY: 'community',
   CAMPAIGN: 'campaign',
-  MILESTONE: 'milestone',
+  TRACE: 'trace',
 };
 
 

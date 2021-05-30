@@ -1,4 +1,4 @@
-import {milestoneModel, MilestoneMongooseDocument, MilestoneStatus} from "../models/milestones.model";
+import {traceModel, TraceMongooseDocument, TraceStatus} from "../models/traces.model";
 import {createProgressBar} from "../utils/progressBar";
 import {EventInterface, ReportInterface} from "../utils/interfaces";
 import {ZERO_ADDRESS} from "../utils/web3Helpers";
@@ -6,22 +6,22 @@ import {getLogger} from "../utils/logger";
 const logger = getLogger();
 
 
-const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongooseDocument) => {
-    const { maxAmount, donationCounters, fullyFunded, reviewerAddress } = milestone;
+const getExpectedStatus = (events: EventInterface[], trace: TraceMongooseDocument) => {
+    const { maxAmount, donationCounters, fullyFunded, reviewerAddress } = trace;
     const hasReviewer = reviewerAddress && reviewerAddress !== ZERO_ADDRESS;
 
     const eventToStatus = {
-        ApproveCompleted: MilestoneStatus.COMPLETED,
-        CancelProject: MilestoneStatus.CANCELED,
-        MilestoneCompleteRequestApproved: MilestoneStatus.COMPLETED,
-        MilestoneCompleteRequestRejected: MilestoneStatus.IN_PROGRESS,
-        MilestoneCompleteRequested: MilestoneStatus.NEEDS_REVIEW,
+        ApproveCompleted: TraceStatus.COMPLETED,
+        CancelProject: TraceStatus.CANCELED,
+        MilestoneCompleteRequestApproved: TraceStatus.COMPLETED,
+        MilestoneCompleteRequestRejected: TraceStatus.IN_PROGRESS,
+        MilestoneCompleteRequested: TraceStatus.NEEDS_REVIEW,
         // "PaymentCollected", // expected status depends on milestone
-        ProjectAdded: MilestoneStatus.IN_PROGRESS,
+        ProjectAdded: TraceStatus.IN_PROGRESS,
         // "ProjectUpdated", // Does not affect milestone status
         // "RecipientChanged", // Does not affect milestone status
-        RejectCompleted: MilestoneStatus.REJECTED,
-        RequestReview: MilestoneStatus.NEEDS_REVIEW,
+        RejectCompleted: TraceStatus.REJECTED,
+        RequestReview: TraceStatus.NEEDS_REVIEW,
     };
 
     const lastEvent = events.pop();
@@ -31,28 +31,28 @@ const getExpectedStatus = (events: EventInterface[], milestone: MilestoneMongoos
           donationCounters[0] &&
           donationCounters[0].currentBalance.toString() === '0'
         ) {
-            return MilestoneStatus.PAID;
+            return TraceStatus.PAID;
         }
-        return getExpectedStatus(events, milestone);
+        return getExpectedStatus(events, trace);
     }
     return eventToStatus[lastEvent.event];
 };
 
-export const updateMilestonesFinalStatus = async (options :{
+export const updateTracesFinalStatus = async (options :{
     report:ReportInterface,
     events: EventInterface[],
 
 }) => {
     const {report, events} = options;
-    const milestones = await milestoneModel.find({ projectId: { $gt: 0 } });
+    const traces = await traceModel.find({ projectId: { $gt: 0 } });
     const startTime = new Date();
     const progressBar = createProgressBar({ title: 'Updating milestone status' });
-    progressBar.start(milestones.length);
-    for (const milestone of milestones) {
+    progressBar.start(traces.length);
+    for (const milestone of traces) {
         progressBar.increment();
         const { status, projectId } = milestone;
         const matchedEvents = events.filter(event => event.returnValues && String(event.returnValues.idProject) === String(projectId));
-        if ([MilestoneStatus.ARCHIVED, MilestoneStatus.CANCELED].includes(status)) continue;
+        if ([TraceStatus.ARCHIVED, TraceStatus.CANCELED].includes(status)) continue;
 
         let message = '';
         message += `Project ID: ${projectId}\n`;
@@ -64,13 +64,13 @@ export const updateMilestonesFinalStatus = async (options :{
                 status,
                 expectedStatus
             })
-            await milestoneModel.updateOne({ _id: milestone._id }, { status: expectedStatus, mined: true });
-            // report.updatedMilestoneStatus ++;
+            await traceModel.updateOne({ _id: milestone._id }, { status: expectedStatus, mined: true });
+            // report.updatedTraceStatus ++;
         }
     }
-    progressBar.update(milestones.length);
+    progressBar.update(traces.length);
     progressBar.stop();
     const spentTime = (new Date().getTime() - startTime.getTime()) / 1000;
     console.log(`Updating milestone status synced end.\n spentTime :${spentTime} seconds`);
-    report.syncMilestoneSpentTime = spentTime;
+    report.syncTraceSpentTime = spentTime;
 };
