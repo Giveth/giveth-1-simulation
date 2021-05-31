@@ -253,7 +253,7 @@ const handleFromDonations = async (from: string, to: string,
             // It's approve or reject
             if (item.status === DonationStatus.TO_APPROVE) {
               item.status =
-                Number(toPledge.owner) === item.intendedProjectId
+                Number(toPledge.owner) === Number(item.intendedProjectId)
                   ? DonationStatus.COMMITTED
                   : DonationStatus.REJECTED;
             }

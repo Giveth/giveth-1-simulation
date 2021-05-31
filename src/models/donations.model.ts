@@ -32,7 +32,7 @@ export interface DonationMongooseDocument extends  Document {
   ownerId: number,
   ownerType :string,
   ownerTypeId :string,
-  intendedProjectId : number,
+  intendedProjectId : string,
   giverAddress: string,
   tokenAddress:string,
   isReturn :boolean,
