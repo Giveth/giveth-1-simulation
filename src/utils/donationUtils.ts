@@ -2,7 +2,7 @@ import {EventInterface, TransferInfoInterface} from "./interfaces";
 import {AdminTypes} from "../models/pledgeAdmins.model";
 
 /**
- * Determine if this transfer was a return of excess funds of an over-funded milestone
+ * Determine if this transfer was a return of excess funds of an over-funded trace
  * @param options
  */
 export function isReturnTransfer(options:
@@ -13,8 +13,8 @@ export function isReturnTransfer(options:
 
   const {txHashTransferEventMap, transferInfo} = options;
   const {fromPledge, fromPledgeAdmin, toPledgeId, txHash, fromPledgeId} = transferInfo;
-  // currently only milestones will can be over-funded
-  if (fromPledgeId === '0' || !fromPledgeAdmin || fromPledgeAdmin.type !== AdminTypes.MILESTONE) {
+  // currently only traces will can be over-funded
+  if (fromPledgeId === '0' || !fromPledgeAdmin || fromPledgeAdmin.type !== AdminTypes.TRACE) {
     return false;
   }
 

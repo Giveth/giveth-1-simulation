@@ -1,44 +1,44 @@
 import {
   getCampaignDataForCreate,
-  getMilestoneDataForCreate,
-  getMilestoneTypeByProjectId
+  getTraceDataForCreate,
+  getTraceTypeByProjectId
 } from "../utils/createProjectHelper";
 import {createProgressBar} from "../utils/progressBar";
 import {EventInterface, ReportInterface} from "../utils/interfaces";
 import {AdminTypes, pledgeAdminModel} from "../models/pledgeAdmins.model";
 import {campaignModel, CampaignStatus} from "../models/campaigns.model";
-import {milestoneModel, MilestoneStatus} from "../models/milestones.model";
+import {traceModel, TraceStatus} from "../models/traces.model";
 import {getLogger} from "../utils/logger";
 
 const logger = getLogger()
 
 
-const createMilestoneForPledgeAdmin = async (options: {
+const createTraceForPledgeAdmin = async (options: {
   project: any,
   idProject: string,
-  milestoneType: string, transactionHash: string,
+  traceType: string, transactionHash: string,
   foreignWeb3: any, homeWeb3: any
 }) => {
   const {
     project, foreignWeb3, homeWeb3,
-    idProject, milestoneType, transactionHash,
+    idProject, traceType, transactionHash,
   } = options;
   const campaign = await campaignModel.findOne({projectId: project.parentProject});
   if (!campaign) {
     logger.error(`Campaign doesn't exist -> projectId:${idProject}`);
     return undefined;
   }
-  const createMilestoneData = await getMilestoneDataForCreate({
+  const createMilestoneData = await getTraceDataForCreate({
     foreignWeb3,
     homeWeb3,
-    milestoneType,
+    traceType,
     project,
     projectId: idProject,
     txHash: transactionHash,
   });
-  return new milestoneModel({
+  return new traceModel({
     ...createMilestoneData,
-    status: MilestoneStatus.RECOVERED,
+    status: TraceStatus.RECOVERED,
     campaignId: campaign._id,
   }).save();
 };
@@ -95,7 +95,7 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
     logger.error(`No pledge admin exists for ${idProject}`);
     logger.info('Transaction Hash:', transactionHash);
 
-    const {project, milestoneType, isCampaign} = await getMilestoneTypeByProjectId({
+    const {project, traceType, isCampaign} = await getTraceTypeByProjectId({
       kernel,
       web3: foreignWeb3,
       projectId: idProject,
@@ -104,28 +104,28 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
     });
     let entity = isCampaign
       ? await campaignModel.findOne({txHash: transactionHash})
-      : await milestoneModel.findOne({txHash: transactionHash});
+      : await traceModel.findOne({txHash: transactionHash});
     // Not found any
     if (!entity && !isCampaign) {
       try {
-        entity = await createMilestoneForPledgeAdmin({
+        entity = await createTraceForPledgeAdmin({
           project,
           idProject,
-          milestoneType,
+          traceType,
           transactionHash,
           foreignWeb3,
           homeWeb3
         });
-        report.createdMilestones++;
+        report.createdTraces++;
       } catch (e) {
-        logger.error('createMilestoneForPledgeAdmin error', {idProject, e});
+        logger.error('createTraceForPledgeAdmin error', {idProject, e});
         await new pledgeAdminModel({
           id: Number(idProject),
-          type: AdminTypes.MILESTONE,
-          typeId: 'notExists because create milestone failed',
+          type: AdminTypes.TRACE,
+          typeId: 'notExists because create trace failed',
           isRecovered :true
         }).save();
-        logger.error('create pledgeAdmin without creating milestone', {idProject});
+        logger.error('create pledgeAdmin without creating trace', {idProject});
       }
     } else if (!entity && isCampaign) {
       entity = await createCampaignForPledgeAdmin({
@@ -142,7 +142,7 @@ const createPledgeAdminAndProjectsIfNeeded = async (options:
     }
 
     logger.info('created entity ', entity);
-    const type = isCampaign ? AdminTypes.CAMPAIGN : AdminTypes.MILESTONE;
+    const type = isCampaign ? AdminTypes.CAMPAIGN : AdminTypes.TRACE;
     logger.info(`a ${type} found with id ${entity._id.toString()} and status ${entity.status}`);
     logger.info(`Title: ${entity.title}`);
     const newPledgeAdmin = new pledgeAdminModel({

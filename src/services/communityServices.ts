@@ -1,13 +1,13 @@
-import {getDacDataForCreate} from "../utils/createProjectHelper";
+import {getCommunityDataForCreate} from "../utils/createProjectHelper";
 import {pledgeAdminModel} from "../models/pledgeAdmins.model";
 import {getTransaction} from "../utils/web3Helpers";
-import {dacModel} from "../models/dacs.model";
+import {communityModel} from "../models/communities.model";
 import {createProgressBar} from "../utils/progressBar";
 import {EventInterface, ReportInterface} from "../utils/interfaces";
 import {getLogger} from "../utils/logger";
 
 const logger = getLogger();
-export const syncDacs = async (options:{
+export const syncCommunities = async (options:{
     fixConflicts:boolean,
     events: EventInterface[],
     report: ReportInterface,
@@ -21,10 +21,10 @@ export const syncDacs = async (options:{
         liquidPledging, kernel,
         events, AppProxyUpgradeable,
     report} = options;
-    console.log('syncDacs called', { fixConflicts });
+    console.log('syncCommunities called', { fixConflicts });
     if (!fixConflicts) return;
     const startTime = new Date();
-    const progressBar = createProgressBar({ title: 'Syncing Dacs with events' });
+    const progressBar = createProgressBar({ title: 'Syncing Communities with events' });
     progressBar.start(events.length, 0);
     for (let i = 0; i < events.length; i += 1) {
         progressBar.update(i);
@@ -39,9 +39,9 @@ export const syncDacs = async (options:{
             const { from } = await getTransaction(
                 {txHash:transactionHash, isHome:false, foreignWeb3, homeWeb3});
             const delegateId = idDelegate;
-            let dac = await dacModel.findOne({ txHash:transactionHash });
-            if (!dac) {
-                const dacData = await getDacDataForCreate({
+            let community = await communityModel.findOne({ txHash:transactionHash });
+            if (!community) {
+                const communityData = await getCommunityDataForCreate({
                     homeWeb3,
                     foreignWeb3,
                     liquidPledging,
@@ -49,21 +49,21 @@ export const syncDacs = async (options:{
                     txHash: transactionHash,
                     delegateId,
                 });
-                dac = await new dacModel(dacData).save();
-                report.createdDacs++;
-                logger.info('created dac ', dac);
+                community = await new communityModel(communityData).save();
+                report.createdCommunities++;
+                logger.info('created community ', community);
             }
             await new pledgeAdminModel(
-                { id: Number(delegateId), type: 'dac', typeId: dac._id, isRecovered :true }).save();
+                { id: Number(delegateId), type: 'community', typeId: community._id, isRecovered :true }).save();
             report.createdPledgeAdmins++;
 
         } catch (e) {
-            logger.error('error in creating dac', e);
+            logger.error('error in creating community', e);
         }
     }
     progressBar.update(events.length);
     progressBar.stop();
     const spentTime = (new Date().getTime() - startTime.getTime()) / 1000;
     report.syncDelegatesSpentTime = spentTime;
-    console.log(`dac/delegate events synced end.\n spentTime :${spentTime} seconds`);
+    console.log(`community/delegate events synced end.\n spentTime :${spentTime} seconds`);
 };

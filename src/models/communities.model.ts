@@ -2,7 +2,7 @@ import { Document, model, Schema, Types } from 'mongoose';
 
 import {DonationCounter, DonationCounterInterface} from './donationCounter.model';
 
-export const DacStatus = {
+export const CommunityStatus = {
   ACTIVE: 'Active',
   PENDING: 'Pending',
   CANCELED: 'Canceled',
@@ -10,7 +10,7 @@ export const DacStatus = {
   RECOVERED: 'Recovered',
 };
 
-export interface DacMongooseDocument extends Document {
+export interface CommunityMongooseDocument extends Document {
   status:string,
   donationCounters: DonationCounterInterface[],
   tokenAddress:string,
@@ -18,22 +18,22 @@ export interface DacMongooseDocument extends Document {
 
 }
 
-const dac = new Schema(
+const community = new Schema(
   // TODO note: the following commenting out of required is b/c
-  // if a dac is added to lp not from the dapp, we can't
+  // if a community is added to lp not from the dapp, we can't
   // guarantee that those fields are present until we have
   // ipfs enabled
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
     communityUrl: { type: String },
-    // FIXME: Should be unique but since we are using 0 for new DACs there can be more than one pending... Should instead be undefined
+    // FIXME: Should be unique but since we are using 0 for new Communities there can be more than one pending... Should instead be undefined
     delegateId: { type: Number }, // we can use Long here b/c lp only stores adminId in pledges as uint64
     status: {
       type: String,
       require: true,
-      enum: Object.values(DacStatus),
-      default: DacStatus.PENDING,
+      enum: Object.values(CommunityStatus),
+      default: CommunityStatus.PENDING,
     },
     image: { type: String },
     prevImage: { type: String }, // To store deleted/cleared lost ipfs values
@@ -55,4 +55,4 @@ const dac = new Schema(
     timestamps: true,
   },
 );
-export const dacModel = model<DacMongooseDocument>('dac', dac);
+export const communityModel = model<CommunityMongooseDocument>('community', community);
