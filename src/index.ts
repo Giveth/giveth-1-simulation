@@ -143,6 +143,7 @@ const handleFromDonations = async (from: string, to: string,
                                    amount: string, transactionHash: string) => {
   const usedFromDonations = []; // List of donations which could be parent of the donation
   let giverAddress;
+  let isReverted = false;
 
   const toUnusedDonationList = pledgeNotUsedDonationListMap[to] || []; // List of donations which are candidates to be charged
 
@@ -231,6 +232,7 @@ const handleFromDonations = async (from: string, to: string,
 
         if (lastInsertedCandidate._id) {
           usedFromDonations.push(lastInsertedCandidate._id);
+          isReverted = isReverted || lastInsertedCandidate.status === DonationStatus.CANCELED;
         }
 
         if (new BigNumber(lastInsertedCandidate.amountRemaining).isZero()) {
@@ -267,6 +269,7 @@ const handleFromDonations = async (from: string, to: string,
           );
           if (item._id) {
             usedFromDonations.push(item._id);
+            isReverted = isReverted || item.status === DonationStatus.CANCELED;
           }
           if (fromAmount.eq(0)) break;
         }
@@ -290,7 +293,7 @@ const handleFromDonations = async (from: string, to: string,
     }
   }
 
-  return {usedFromDonations, giverAddress};
+  return {usedFromDonations, giverAddress, isReverted};
 };
 
 const handleToDonations = async ({
@@ -616,7 +619,7 @@ const syncEventWithDb = async (eventData: EventInterface) => {
     const {from, to, amount} = returnValues;
     logger.debug(`Transfer from ${from} to ${to} amount ${amount}`);
 
-    const {usedFromDonations, giverAddress} = await handleFromDonations(
+    const {usedFromDonations, giverAddress, isReverted} = await handleFromDonations(
       from,
       to,
       amount,
@@ -631,6 +634,7 @@ const syncEventWithDb = async (eventData: EventInterface) => {
       blockNumber,
       usedFromDonations,
       giverAddress,
+      isReverted
     });
   } else if (event === 'CancelProject') {
     const {idProject} = returnValues;
