@@ -17,6 +17,8 @@ export interface EventInterface {
   // address: string,
   blockNumber: number,
   transactionHash: string,
+  signature?: string,
+  raw?: any,
   // transactionIndex: number,
   // blockHash: string,
   logIndex: number,
@@ -114,6 +116,7 @@ export interface ReportInterface {
   fetchedNewEventsCount: number,
   removedPendingAmountRemainingCount: number,
   updatedTraceStatus: number,
+  addedEventsToDb: number,
 }
 
 export interface Token {

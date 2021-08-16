@@ -33,6 +33,7 @@ import {
 import {isReturnTransfer} from "./utils/donationUtils";
 import {report} from "./utils/reportUtils";
 import {updateOneDonation} from "./repositories/donationRepository";
+import {eventModel, EventStatus} from "./models/events.model";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
 const givethDevMailList = config.get('givethDevMailList') as string[];
@@ -686,6 +687,40 @@ const syncDonationsWithNetwork = async () => {
 };
 
 
+const addEventsToDbIfNotExists = async () => {
+  const getEventKey = ({ transactionHash, logIndex }) => `${transactionHash}-${logIndex}`;
+  const addEventToDb =async (event:EventInterface)=>{
+      logger.info(`This event is not saved in db!\n${JSON.stringify(event, null, 2)}`);
+      if (!event || !event.event || !event.signature || !event.returnValues || !event.raw) {
+        console.error('Attempted to add undefined event or event with undefined values');
+      } else {
+        await eventModel.create({
+          ...event,
+          confirmations: requiredConfirmations,
+          status: EventStatus.PROCESSED,
+        });
+        report.addedEventsToDb ++ ;
+      }
+  }
+  const dbEventsSet = new Set();
+  const {liquidPledgingAddress, requiredConfirmations} = config.blockchain;
+  await eventModel.find({
+    address: liquidPledgingAddress,
+  })
+    .select(['transactionHash', 'logIndex'])
+    .cursor()
+    .eachAsync(e => {
+      dbEventsSet.add(getEventKey(e));
+    });
+
+  for (const event of events) {
+    if (!dbEventsSet.has(getEventKey(event))) {
+      await addEventToDb(event)
+    }
+  }
+};
+
+
 const main = async () => {
   try {
     homeWeb3 = (await instantiateWeb3(homeNodeUrl)).web3;
@@ -771,12 +806,12 @@ const main = async () => {
         //   }
         // );
         await unsetPendingAmountRemainingFromCommittedDonations();
+        await addEventsToDbIfNotExists()
         console.table(report);
         console.log('end of simulation ', new Date())
         if (config.get('emailReport')) {
           await sendReportEmail(report)
         }
-
         terminateScript('All job done.', 0);
       } catch (e) {
         console.log('error syncing ... ', e);

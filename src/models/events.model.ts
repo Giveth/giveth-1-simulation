@@ -1,6 +1,6 @@
 import { Document, model, Schema, Types } from 'mongoose';
 
-const EventStatus = {
+export const EventStatus = {
   PENDING: 'Pending', // PENDING events were p/u by the ws subscription, but have yet to contain >= requiredConfirmations
   WAITING: 'Waiting', // WAITING events have been p/u by polling, have >= requiredConfirmations, & are ready to process
   PROCESSING: 'Processing',
@@ -10,6 +10,9 @@ const EventStatus = {
 
 export interface EventMongooseDocument extends Document {
   event:string,
+  signature:string,
+  logIndex:number,
+  raw:any,
   returnValues:{
     idGiver:string
     url:string
