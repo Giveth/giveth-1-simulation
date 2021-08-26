@@ -36,6 +36,7 @@ export interface TraceMongooseDocument extends  Document {
   maxAmount:string,
   fullyFunded:boolean,
   tokenAddress:string,
+  recipientId ?:number,
   donationCounters: DonationCounterInterface [],
 
 }

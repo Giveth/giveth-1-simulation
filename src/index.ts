@@ -4,7 +4,7 @@ const config = require('config');
 import {
   AdminInterface,
   DelegateInfoInterface,
-  DonationListObjectInterface, DonationObjectInterface, EventInterface,
+  DonationListObjectInterface, DonationObjectInterface, EventInterface, ExtendedDonation,
   PledgeInterface, TransferInfoInterface,
 } from './utils/interfaces';
 import BigNumber from 'bignumber.js';
@@ -32,7 +32,12 @@ import {
 } from "./services/donationService";
 import {isReturnTransfer} from "./utils/donationUtils";
 import {report} from "./utils/reportUtils";
-import {updateOneDonation} from "./repositories/donationRepository";
+import {
+  findCampaignChildDonation,
+  findDonationById,
+  isDonationBackToCampaignFromTrace,
+  updateOneDonation
+} from "./repositories/donationRepository";
 import {eventModel, EventStatus} from "./models/events.model";
 
 const dappMailerUrl = config.get('dappMailerUrl') as string;
@@ -196,8 +201,10 @@ const handleFromDonations = async (from: string, to: string,
         if (fixConflicts) {
           report.updatedDonations++;
           await updateOneDonation(toFixDonation._id,
-            {status: toFixDonation.status,
-              pledgeId: to})
+            {
+              status: toFixDonation.status,
+              pledgeId: to
+            })
           report.correctFailedDonations++;
         }
       }
@@ -317,14 +324,15 @@ const handleToDonations = async ({
   const fromOwnerAdmin = from !== '0' ? admins[Number(fromOwnerId)] : {};
 
   const fromPledgeAdmin = await pledgeAdminModel.findOne({id: Number(fromOwnerId)});
-
-  const isReturn: boolean = Boolean(isReverted || isReturnTransfer(
+  const toPledgeAdmin = await pledgeAdminModel.findOne({id: Number(toOwnerId)});
+  let isReturn: boolean = Boolean(isReverted || isReturnTransfer(
     {
       txHashTransferEventMap
       , transferInfo:
         {
           fromPledge,
           fromPledgeAdmin,
+          toPledgeAdmin,
           fromPledgeId: from,
           toPledgeId: to,
           txHash: transactionHash,
@@ -336,8 +344,27 @@ const handleToDonations = async ({
     item => item.txHash === transactionHash && item.amountRemaining === '0' && item.isReturn === isReturn,
   );
 
-  const toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
-  if (toDonation === undefined) {
+  let toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
+  if (!toDonation && !isReturn ){
+    // If we didnt find any donation in above statement we should check to see if we find
+    // donations with isReturn===true, so in this case it's ok to donation have different isReturn
+    // if it's a donation with the trace donation parent, and it's ownerType is campaign
+    const toIndex= toNotFilledDonationList.findIndex(
+      item => item.txHash === transactionHash &&
+        item.amountRemaining === '0' &&
+        item.isReturn === true,
+    );
+    toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
+    const isDonationBackToCampaign = toDonation && await isDonationBackToCampaignFromTrace(toDonation)
+
+    if (isDonationBackToCampaign) {
+      isReturn = true;
+    }else{
+      toDonation = undefined
+    }
+  }
+
+  if (!toDonation) {
     // If parent is cancelled, this donation is not needed anymore
     const status = convertPledgeStateToStatus(toPledge, toOwnerAdmin);
     let expectedToDonation: any = {
@@ -483,7 +510,7 @@ const handleToDonations = async ({
         actionTakerAddress,
         amountRemaining: new BigNumber(expectedToDonation.amountRemaining).toFixed(),
         mined: true,
-        createdBySimulation:true,
+        createdBySimulation: true,
         createdAt: new Date(timestamp * 1000),
       };
 
@@ -532,7 +559,17 @@ const handleToDonations = async ({
     addChargedDonation(expectedToDonation);
   } else {
     // Check toDonation has correct status and mined flag
-    const expectedStatus = convertPledgeStateToStatus(toPledge, toOwnerAdmin);
+    let expectedStatus = convertPledgeStateToStatus(toPledge, toOwnerAdmin);
+    const hasCampaignChildDonation = await findCampaignChildDonation(toDonation._id)
+    if (toDonation.ownerType === AdminTypes.TRACE && hasCampaignChildDonation) {
+      expectedStatus = DonationStatus.PAID
+    }
+    const isDonationBackToCampaign = await isDonationBackToCampaignFromTrace(toDonation)
+
+    if (isDonationBackToCampaign) {
+      isReturn = true;
+    }
+
     if (expectedStatus === null) {
       logger.error(`Pledge status ${toPledge.pledgeState} is unknown`);
       terminateScript(`Pledge status ${toPledge.pledgeState} is unknown`);
@@ -579,7 +616,7 @@ const handleToDonations = async ({
       );
       await updateOneDonation(toDonation._id,
         {usdValue: toDonation.usdValue}
-        )
+      )
     }
 
     toDonation.txHash = transactionHash;
@@ -688,19 +725,19 @@ const syncDonationsWithNetwork = async () => {
 
 
 const addEventsToDbIfNotExists = async () => {
-  const getEventKey = ({ transactionHash, logIndex }) => `${transactionHash}-${logIndex}`;
-  const addEventToDb =async (event:EventInterface)=>{
-      logger.info(`This event is not saved in db!\n${JSON.stringify(event, null, 2)}`);
-      if (!event || !event.event || !event.signature || !event.returnValues || !event.raw) {
-        console.error('Attempted to add undefined event or event with undefined values');
-      } else {
-        await eventModel.create({
-          ...event,
-          confirmations: requiredConfirmations,
-          status: EventStatus.PROCESSED,
-        });
-        report.addedEventsToDb ++ ;
-      }
+  const getEventKey = ({transactionHash, logIndex}) => `${transactionHash}-${logIndex}`;
+  const addEventToDb = async (event: EventInterface) => {
+    logger.info(`This event is not saved in db!\n${JSON.stringify(event, null, 2)}`);
+    if (!event || !event.event || !event.signature || !event.returnValues || !event.raw) {
+      console.error('Attempted to add undefined event or event with undefined values');
+    } else {
+      await eventModel.create({
+        ...event,
+        confirmations: requiredConfirmations,
+        status: EventStatus.PROCESSED,
+      });
+      report.addedEventsToDb++;
+    }
   }
   const dbEventsSet = new Set();
   const {liquidPledgingAddress, requiredConfirmations} = config.blockchain;
@@ -839,7 +876,7 @@ main()
   .catch(e => terminateScript(e, 1));
 
 const simulationTimeoutInMinutes = config.simulationTimeoutInMinutes || 30;
-setTimeout(()=>{
+setTimeout(() => {
   console.log(`If you see this log it mean the process doesnt exit after ${simulationTimeoutInMinutes} minutes,
   so exit process manually`);
   // When there is problem in connecting network, there would be infinity reconnect and logs
