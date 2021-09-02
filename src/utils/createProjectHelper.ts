@@ -229,7 +229,7 @@ export const getCommunityDataForCreate = async (options: {
     txHash,
     delegateId,
     mined: true,
-    status: CommunityStatus.RECOVERED,
+    status: CommunityStatus.CANCELED,
     isRecovered:true,
     totalDonated: '0',
     currentBalance: '0',

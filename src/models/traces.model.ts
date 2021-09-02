@@ -18,7 +18,6 @@ export const TraceStatus = {
   PAID: 'Paid',
   FAILED: 'Failed',
   ARCHIVED: 'Archived',
-  RECOVERED: 'Recovered',
 };
 
 export const TraceTypes = {

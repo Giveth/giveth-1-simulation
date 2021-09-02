@@ -38,7 +38,7 @@ const createTraceForPledgeAdmin = async (options: {
   });
   return new traceModel({
     ...createMilestoneData,
-    status: TraceStatus.RECOVERED,
+    status: TraceStatus.CANCELED,
     campaignId: campaign._id,
   }).save();
 };
@@ -60,7 +60,7 @@ const createCampaignForPledgeAdmin = async (options:
   });
   return new campaignModel({
     ...createCampaignData,
-    status: CampaignStatus.RECOVERED,
+    status: CampaignStatus.CANCELED,
   }).save();
 };
 

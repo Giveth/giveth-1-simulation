@@ -7,7 +7,6 @@ export const CommunityStatus = {
   PENDING: 'Pending',
   CANCELED: 'Canceled',
   FAILED: 'Failed',
-  RECOVERED: 'Recovered',
 };
 
 export interface CommunityMongooseDocument extends Document {
