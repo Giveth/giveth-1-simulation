@@ -7,7 +7,6 @@ export const CampaignStatus = {
     PENDING: 'Pending',
     CANCELED: 'Canceled',
     FAILED: 'Failed',
-    RECOVERED: 'Recovered',
 };
 
 export interface CampaignMongooseDocument extends Document {
