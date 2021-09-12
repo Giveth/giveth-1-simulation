@@ -57,9 +57,9 @@ export const isDonationBackToCampaignFromTrace = async (donation) => {
     parentDonation.ownerType !== AdminTypes.TRACE) {
     return false;
   }
-  const grandParentDonation = await findParentDonation(donation.parentDonations);
+  const grandParentDonation = await findParentDonation(parentDonation.parentDonations);
   return Boolean(grandParentDonation &&
-    grandParentDonation.ownerType !== AdminTypes.CAMPAIGN &&
-    grandParentDonation.ownerTypeId !== donation.ownerTypeId)
+    grandParentDonation.ownerType === AdminTypes.CAMPAIGN &&
+    grandParentDonation.ownerTypeId === donation.ownerTypeId)
 
 }

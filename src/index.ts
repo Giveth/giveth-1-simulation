@@ -356,7 +356,6 @@ const handleToDonations = async ({
     );
     toDonation = toIndex !== -1 ? toNotFilledDonationList.splice(toIndex, 1)[0] : undefined;
     const isDonationBackToCampaign = toDonation && await isDonationBackToCampaignFromTrace(toDonation)
-
     if (isDonationBackToCampaign) {
       isReturn = true;
     }else{
@@ -565,7 +564,6 @@ const handleToDonations = async ({
       expectedStatus = DonationStatus.PAID
     }
     const isDonationBackToCampaign = await isDonationBackToCampaignFromTrace(toDonation)
-
     if (isDonationBackToCampaign) {
       isReturn = true;
     }
