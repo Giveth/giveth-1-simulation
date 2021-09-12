@@ -81,6 +81,7 @@ export interface DonationObjectInterface {
 export interface TransferInfoInterface {
   fromPledge: PledgeInterface,
   fromPledgeAdmin: PledgeAdminMongooseDocument,
+  toPledgeAdmin: PledgeAdminMongooseDocument,
   toPledgeId: string,
   txHash: string,
   fromPledgeId: string

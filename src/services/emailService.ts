@@ -138,7 +138,7 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
     });
     await Promise.all(promises);
   } catch (e) {
-    console.log('sendReportEmail error', e);
+    console.log('sendReportEmail error', e.message);
   }
 
 };
