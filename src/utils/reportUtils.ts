@@ -22,5 +22,6 @@ export const report :ReportInterface= {
   fetchedNewEventsCount: 0,
   fetchedNewPledgeAdminCount: 0,
   fetchedNewPledgeCount: 0,
-  removedPendingAmountRemainingCount: 0
+  removedPendingAmountRemainingCount: 0,
+  addedEventsToDb: 0
 };

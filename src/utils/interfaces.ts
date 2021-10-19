@@ -17,6 +17,8 @@ export interface EventInterface {
   // address: string,
   blockNumber: number,
   transactionHash: string,
+  signature?: string,
+  raw?: any,
   // transactionIndex: number,
   // blockHash: string,
   logIndex: number,
@@ -79,6 +81,7 @@ export interface DonationObjectInterface {
 export interface TransferInfoInterface {
   fromPledge: PledgeInterface,
   fromPledgeAdmin: PledgeAdminMongooseDocument,
+  toPledgeAdmin: PledgeAdminMongooseDocument,
   toPledgeId: string,
   txHash: string,
   fromPledgeId: string
@@ -114,6 +117,7 @@ export interface ReportInterface {
   fetchedNewEventsCount: number,
   removedPendingAmountRemainingCount: number,
   updatedTraceStatus: number,
+  addedEventsToDb: number,
 }
 
 export interface Token {

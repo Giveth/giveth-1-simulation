@@ -90,6 +90,10 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
                   <td style='${tableCellStyle}'>removedPendingAmountRemainingCount</td>
                   <td style='${tableCellStyle}'>${reportData.removedPendingAmountRemainingCount}</td>
                 </tr>
+                <tr>
+                  <td style='${tableCellStyle}'>addedEventsToDb</td>
+                  <td style='${tableCellStyle}'>${reportData.addedEventsToDb}</td>
+                </tr>
               </table>
       `,
       // cta: `Manage Trace`,
@@ -110,6 +114,7 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
       reportData.updateAmountRemaining ||
       reportData.updatedDonations ||
       reportData.deletedDonations ||
+      reportData.addedEventsToDb ||
       reportData.removedPendingAmountRemainingCount
     )
     const summaryMessage = resolvedConflicts ?
@@ -133,7 +138,7 @@ export const sendReportEmail = async (reportData: ReportInterface) => {
     });
     await Promise.all(promises);
   } catch (e) {
-    console.log('sendReportEmail error', e);
+    console.log('sendReportEmail error', e.message);
   }
 
 };

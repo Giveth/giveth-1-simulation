@@ -18,7 +18,6 @@ export const TraceStatus = {
   PAID: 'Paid',
   FAILED: 'Failed',
   ARCHIVED: 'Archived',
-  RECOVERED: 'Recovered',
 };
 
 export const TraceTypes = {
@@ -36,6 +35,7 @@ export interface TraceMongooseDocument extends  Document {
   maxAmount:string,
   fullyFunded:boolean,
   tokenAddress:string,
+  recipientId ?:number,
   donationCounters: DonationCounterInterface [],
 
 }
